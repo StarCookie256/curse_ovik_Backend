@@ -1,0 +1,123 @@
+﻿using System;
+using System.Collections.Generic;
+using Microsoft.EntityFrameworkCore;
+using PerfumeryBackend.DatabaseLayer.Models;
+
+namespace PerfumeryBackend.DatabaseLayer;
+
+public partial class PerfumeryDbContext : DbContext
+{
+    public PerfumeryDbContext()
+    {
+    }
+
+    public PerfumeryDbContext(DbContextOptions<PerfumeryDbContext> options)
+        : base(options)
+    {
+    }
+
+    public virtual DbSet<Basket> Baskets { get; set; }
+
+    public virtual DbSet<BasketItem> BasketItems { get; set; }
+
+    public virtual DbSet<Brand> Brands { get; set; }
+
+    public virtual DbSet<Category> Categories { get; set; }
+
+    public virtual DbSet<Country> Countries { get; set; }
+
+    public virtual DbSet<Customer> Customers { get; set; }
+
+    public virtual DbSet<Product> Products { get; set; }
+
+    public virtual DbSet<ProductVariation> ProductVariations { get; set; }
+
+    public virtual DbSet<Review> Reviews { get; set; }
+
+    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
+        => optionsBuilder.UseSqlite("Data Source=./perfumeryDB.sqlite");
+
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<Basket>(entity =>
+        {
+            entity.Property(e => e.Id).HasColumnName("ID");
+            entity.Property(e => e.CustomerId).HasColumnName("CustomerID");
+
+            entity.HasOne(d => d.Customer).WithMany(p => p.Baskets).HasForeignKey(d => d.CustomerId);
+        });
+
+        modelBuilder.Entity<BasketItem>(entity =>
+        {
+            entity.Property(e => e.Id).HasColumnName("ID");
+            entity.Property(e => e.BasketId).HasColumnName("BasketID");
+            entity.Property(e => e.ProductId).HasColumnName("ProductID");
+
+            entity.HasOne(d => d.Basket).WithMany(p => p.BasketItems).HasForeignKey(d => d.BasketId);
+
+            entity.HasOne(d => d.Product).WithMany(p => p.BasketItems).HasForeignKey(d => d.ProductId);
+        });
+
+        modelBuilder.Entity<Brand>(entity =>
+        {
+            entity.Property(e => e.Id).HasColumnName("ID");
+        });
+
+        modelBuilder.Entity<Category>(entity =>
+        {
+            entity.Property(e => e.Id).HasColumnName("ID");
+        });
+
+        modelBuilder.Entity<Country>(entity =>
+        {
+            entity.Property(e => e.Id).HasColumnName("ID");
+        });
+
+        modelBuilder.Entity<Customer>(entity =>
+        {
+            entity.HasIndex(e => e.AccessToken, "IX_Customers_AccessToken").IsUnique();
+
+            entity.HasIndex(e => e.RefreshToken, "IX_Customers_RefreshToken").IsUnique();
+
+            entity.Property(e => e.Id).HasColumnName("ID");
+        });
+
+        modelBuilder.Entity<Product>(entity =>
+        {
+            entity.Property(e => e.Id).HasColumnName("ID");
+            entity.Property(e => e.BrandId).HasColumnName("BrandID");
+            entity.Property(e => e.CountryId).HasColumnName("CountryID");
+
+            entity.HasOne(d => d.Brand).WithMany(p => p.Products).HasForeignKey(d => d.BrandId);
+
+            entity.HasOne(d => d.Country).WithMany(p => p.Products).HasForeignKey(d => d.CountryId);
+        });
+
+        modelBuilder.Entity<ProductVariation>(entity =>
+        {
+            entity.Property(e => e.Id).HasColumnName("ID");
+            entity.Property(e => e.CategoryId).HasColumnName("CategoryID");
+            entity.Property(e => e.ProductId).HasColumnName("ProductID");
+
+            entity.HasOne(d => d.Category).WithMany(p => p.ProductVariations).HasForeignKey(d => d.CategoryId);
+
+            entity.HasOne(d => d.Product).WithMany(p => p.ProductVariations).HasForeignKey(d => d.ProductId);
+        });
+
+        modelBuilder.Entity<Review>(entity =>
+        {
+            entity.Property(e => e.Id).HasColumnName("ID");
+            entity.Property(e => e.CustomerId).HasColumnName("CustomerID");
+            entity.Property(e => e.ProductId).HasColumnName("ProductID");
+
+            entity.HasOne(d => d.Customer).WithMany(p => p.Reviews).HasForeignKey(d => d.CustomerId);
+
+            entity.HasOne(d => d.Product).WithMany(p => p.Reviews).HasForeignKey(d => d.ProductId);
+        });
+
+        OnModelCreatingPartial(modelBuilder);
+    }
+
+    partial void OnModelCreatingPartial(ModelBuilder modelBuilder);
+}

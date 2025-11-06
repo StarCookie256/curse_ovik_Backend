@@ -1,5 +1,6 @@
 ﻿using PerfumeryBackend.DatabaseLayer;
 using PerfumeryBackend.DatabaseLayer.Models;
+using PerfumeryBackend.ParserLayer.Services;
 using System.Linq;
 
 namespace PerfumeryBackend.ParserLayer;
@@ -50,9 +51,9 @@ public class DbManipulations
 }
 
 
-    // проверка в БД на существующее поле
-    //public bool DbValidation()
-    //{
-    //    return true;
-    //}
+// проверка в БД на существующее поле
+//public bool DbValidation()
+//{
+//    return true;
+//}
 

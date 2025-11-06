@@ -4,21 +4,23 @@ using PerfumeryBackend.DatabaseLayer.Models;
 using PerfumeryBackend.DatabaseLayer;
 using System.Collections.ObjectModel;
 
-namespace PerfumeryBackend.ParserLayer;
+namespace PerfumeryBackend.ParserLayer.Services;
 
 public class WebsiteParser
 {
     public ChromeOptions options = new ChromeOptions();
     public const string GECKO = @"D:\Games\My_projects_c#\PerfumeryBackend\bin\Debug\net8.0\";
     private ChromeDriverService driverService = ChromeDriverService.CreateDefaultService(GECKO);
-
     public ChromeDriverService DriverService { get => driverService; set => driverService = value; }
 
     private ReadOnlyCollection<IWebElement> categoriesDiv = new([]);
     private ReadOnlyCollection<IWebElement> manBrandsDiv = new([]);
     private ReadOnlyCollection<IWebElement> womenBrandsDiv = new([]);
+
     public static List<string> brands = [];
     public static List<string> categories = [];
+    public static List<string> countries = [];
+    private static Random random = new Random();
 
     public Task ParseData(PerfumeData perfumeData)
     {
@@ -27,7 +29,7 @@ public class WebsiteParser
         DriverService.HideCommandPromptWindow = true;  // Скрыть консоль geckodriver
 
         DriverService.Start();
-        System.Threading.Thread.Sleep(1000); // Подождать 1 секунду
+        Thread.Sleep(1000); // Подождать 1 секунду
 
         using ChromeDriver driver = new(DriverService, options);
 
@@ -47,7 +49,7 @@ public class WebsiteParser
         foreach (var item in womenBrandsDiv.ToList())
         {
             string brandsGender = "women";
-            if(parsedBrands > womenBrandsCount)
+            if (parsedBrands > womenBrandsCount)
             {
                 brandsGender = "men";
             }
@@ -82,32 +84,27 @@ public class WebsiteParser
                     // находим checkBox, отвечающий за скрытые товары
                     var productsCheckBox = driver.FindElement(By.XPath("//input[@class='checkbox_inav checkbox w-bg']"));
                     productsCheckBox?.Click();
-                    // потом сделать click по checkBox, смотрим товары, потом форИч по колву строчек товаров, каждый присваиваем, а потом кидаем в БД
-                    var allProductsVariants = (productsCheckBox == null) ? driver.FindElements(By.XPath("//tr[@class='tr_no_avl.no-stock']")) : driver.FindElements(By.XPath("//tr[@class='tr_avl']"));
+                    // click по checkBox, смотрим товары, потом форИч по колву строчек товаров, каждый присваиваем, а потом кидаем в БД
+                    var allProductsVariants = productsCheckBox == null ? driver.FindElements(By.XPath("//tr[@class=' tr_no_avl.no-stock']")) : driver.FindElements(By.XPath("//tr[@class='tr_avl']"));
 
                     // список с вариантами одного продукта
                     List<ProductVariation> productVariants = new List<ProductVariation>();
 
                     if (allProductsVariants != null)
                     {
-
                         foreach (IWebElement webProductVariant in allProductsVariants)
                         {
-                            var productVarName = webProductVariant.FindElement(By.XPath(".//div[@classflex flex-column table-filter-description']/span"));
-                            var productVarType = webProductVariant.FindElement(By.XPath(".//div[@class='smaller d-flex flex-row flex-nowrap align-items-center pt-1 adinfost']"));
+                            var productVarName = webProductVariant.FindElement(By.XPath(".//div[@class='d-flex flex-column table-filter-description']/span"));
                             var productVarPrice = webProductVariant.FindElement(By.XPath(".//span[@itemprop='price']"));
                             var productVarVolume = webProductVariant.FindElement(By.XPath(".//div[@class='table_volume pl-2']/span"));
-                            var productVarStock = webProductVariant.FindElement(By.XPath(".//div[@class='av_raduga']"));
 
                             ProductVariation productVariant = new ProductVariation()
                             {
                                 Id = 0,
-                                Name = productVarName.Text,
-                                Type = productVarType.Text,
                                 ProductId = 0,
                                 Price = Convert.ToDouble(productVarPrice.Text),
                                 Volume = Convert.ToDouble(productVarVolume.Text),
-                                Stock = Convert.ToInt32(productVarStock.Text)
+                                Stock = random.Next(42, 10000)
                             };
 
                             productVariants.Add(productVariant);
@@ -120,7 +117,7 @@ public class WebsiteParser
                 {
                     throw new ArgumentException(ex.Message);
                 }
-                finally 
+                finally
                 {
                     parsedBrands++;
                 }

@@ -27,7 +27,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="DatabaseLayer\Models\" />
+    <Folder Include="DatabaseLayer\Services\" />
   </ItemGroup>
 
 </Project>
