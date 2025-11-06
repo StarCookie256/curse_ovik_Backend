@@ -6,6 +6,7 @@ namespace PerfumeryBackend.ParserLayer;
 
 public class DbManipulations
 {
+    // бубубу
     // добавление записей в БД
     public void AddDataToDb()
     {
