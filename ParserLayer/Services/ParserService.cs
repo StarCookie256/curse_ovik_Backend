@@ -6,7 +6,7 @@ using System.Collections.ObjectModel;
 
 namespace PerfumeryBackend.ParserLayer.Services;
 
-public class WebsiteParser
+public class ParserService
 {
     public ChromeOptions options = new ChromeOptions();
     public const string GECKO = @"D:\Games\My_projects_c#\PerfumeryBackend\bin\Debug\net8.0\";
@@ -14,15 +14,15 @@ public class WebsiteParser
     public ChromeDriverService DriverService { get => driverService; set => driverService = value; }
 
     private ReadOnlyCollection<IWebElement> categoriesDiv = new([]);
-    private ReadOnlyCollection<IWebElement> manBrandsDiv = new([]);
-    private ReadOnlyCollection<IWebElement> womenBrandsDiv = new([]);
+    private List<IWebElement> _brandsDivList = new();
+    private ReadOnlyCollection<IWebElement> _realBrandsDiv => _brandsDivList.AsReadOnly();
 
-    public static List<string> brands = [];
-    public static List<string> categories = [];
-    public static List<string> countries = [];
-    private static Random random = new Random();
+    public static List<string> Brands { get; } = [];
+    public static List<string> Categories { get; } = [];
+    public static List<string> Countries { get; } = [];
+    private static Random _random = new Random();
 
-    public Task ParseData(PerfumeData perfumeData)
+    public Task ParseData()
     {
         options.AddArgument("--headless");
 
@@ -34,19 +34,19 @@ public class WebsiteParser
         using ChromeDriver driver = new(DriverService, options);
 
         // парсим ЖЕНСКИЕ БРЕНДЫ
-        ParseWomenBrands(driver).ForEach(item => brands.Add(item.Text));
-        int womenBrandsCount = brands.Count;
+        ParseWomenBrands(driver).ForEach(item => Brands.Add(item.Text));
+        int womenBrandsCount = Brands.Count;
 
         // парсим МУЖСКИЕ БРЕНДЫ
-        ParseManBrands(driver).ForEach(item => brands.Add(item.Text));
-        int menBrandsCount = brands.Count - womenBrandsCount;
+        ParseManBrands(driver).ForEach(item => Brands.Add(item.Text));
+        int menBrandsCount = Brands.Count - womenBrandsCount;
 
         // парсим КАТЕГОРИИ
-        ParseCategories(driver).ForEach(item => categories.Add(item.Text));
+        ParseCategories(driver).ForEach(item => Categories.Add(item.Text));
 
-        // парсим ТОВАРЫ из ЖЕНСКИХ БРЕНДОВ
+        // парсим ТОВАРЫ из БРЕНДОВ
         int parsedBrands = 0;
-        foreach (var item in womenBrandsDiv.ToList())
+        foreach (var item in _realBrandsDiv.ToList())
         {
             string brandsGender = "women";
             if (parsedBrands > womenBrandsCount)
@@ -57,16 +57,22 @@ public class WebsiteParser
             string productImage = string.Empty;
             string productName = string.Empty;
 
-            char[] brandChars = brand.ToCharArray(); // Convert to char array which is mutable
-
-            for (int i = 0; i < brandChars.Length; i++)
+            if (driver.Url != $"https://духи.рф/catalog/{brandsGender}")
             {
-                if (brandChars[i] == ' ') brandChars[i] = '-';
+                driver.Navigate().GoToUrl($"https://духи.рф/catalog/{brandsGender}");
             }
 
-            brand = new string(brandChars); // Convert back to string
+            //char[] brandChars = brand.ToCharArray(); // Convert to char array which is mutable
 
-            driver.Navigate().GoToUrl($"https://духи.рф/catalog/{brandsGender}/{brand}");
+            //for (int i = 0; i < brandChars.Length; i++)
+            //{
+            //    if (brandChars[i] == ' ') brandChars[i] = '-';
+            //}
+
+            //brand = new string(brandChars); // Convert back to string
+            item.Click();
+            Thread.Sleep(100);
+
             var allBrandProducts = driver.FindElements(By.XPath("//div[@class='col-6 col-lg-4 mb-4']"));
             foreach (var product in allBrandProducts)
             {
@@ -80,6 +86,13 @@ public class WebsiteParser
 
                     // находим ссылку на фото продукта
                     productImage = "https://духи.рф/" + driver.FindElement(By.XPath("//div[@class='slider-singl slider-photocard mt-2 slick-initialized slick-slider']//img/@src")).GetAttribute("textContent");
+
+                    // находим страну и сохраняем в общий массив
+                    var productFlag = driver.FindElement(By.XPath("//img[@class='sflag mr-1']/..")).Text;
+                    if (productFlag != null)
+                    {
+                        Countries.Add(productFlag);
+                    }
 
                     // находим checkBox, отвечающий за скрытые товары
                     var productsCheckBox = driver.FindElement(By.XPath("//input[@class='checkbox_inav checkbox w-bg']"));
@@ -104,14 +117,13 @@ public class WebsiteParser
                                 ProductId = 0,
                                 Price = Convert.ToDouble(productVarPrice.Text),
                                 Volume = Convert.ToDouble(productVarVolume.Text),
-                                Stock = random.Next(42, 10000)
+                                Stock = _random.Next(42, 10000)
                             };
 
                             productVariants.Add(productVariant);
                         }
 
                     }
-                    // сделать БД
                 }
                 catch (ArgumentNullException ex)
                 {
@@ -132,16 +144,20 @@ public class WebsiteParser
     {
         driver.Navigate().GoToUrl("https://духи.рф/catalog");
 
-        womenBrandsDiv = driver.FindElements(By.XPath("//div[@class='union_brands_list d-flex flex-row flex-wrap w-100']//div[@class='col-11']//a[@class='wrap_a items type_name']"));
-        return womenBrandsDiv.ToList();
+        var womenBrands = driver.FindElements(By.XPath("//div[@class='union_brands_list d-flex flex-row flex-wrap w-100']//div[@class='col-11']//a[@class='wrap_a items type_name']"));
+
+        _brandsDivList.AddRange(womenBrands);
+        return womenBrands.ToList();
     }
 
     public List<IWebElement> ParseManBrands(ChromeDriver driver)
     {
         driver.Navigate().GoToUrl("https://духи.рф/catalog/men");
 
-        manBrandsDiv = driver.FindElements(By.XPath("//div[@class='union_brands_list d-flex flex-row flex-wrap w-100']//div[@class='col-11']//a[@class='wrap_a items type_name']"));
-        return manBrandsDiv.ToList();
+        var manBrands = driver.FindElements(By.XPath("//div[@class='union_brands_list d-flex flex-row flex-wrap w-100']//div[@class='col-11']//a[@class='wrap_a items type_name']"));
+
+        _brandsDivList.AddRange(manBrands);
+        return manBrands.ToList();
     }
 
     public List<IWebElement> ParseCategories(ChromeDriver driver)

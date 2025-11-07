@@ -16,8 +16,9 @@ namespace PerfumeryBackend.Services
 
         public Task DataToDB()
         {
-            BrandsToDB(WebsiteParser.brands);
-            CategoriesToDB(WebsiteParser.categories);
+            BrandsToDB(ParserService.Brands);
+            CategoriesToDB(ParserService.Categories);
+            CountriesToDB(ParserService.Countries);
 
             return Task.CompletedTask;
         }
@@ -58,9 +59,22 @@ namespace PerfumeryBackend.Services
             return Task.CompletedTask;
         }
 
-        public Task CountriesToDB(List<string> countries)
+        public Task CountriesToDB(List<string> importCountries)
         {
-            throw new NotImplementedException();
+            var countries = importCountries;
+
+            foreach (string country in countries)
+            {
+                // если нет в таблице - добавляем
+                if (!_db.Countries.Any(e => e.Name == country))
+                {
+                    _db.Countries.Add(new Country { Name = country });
+                    _db.SaveChanges();
+                }
+
+            }
+
+            return Task.CompletedTask;
         }
     }
 }

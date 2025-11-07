@@ -19,7 +19,7 @@ public class DbManipulations
     // бренды в БД
     public void AddBrandsToDb(PerfumeryDbContext db)
     {
-        var brands = WebsiteParser.brands;
+        var brands = ParserService.brands;
 
         foreach (string brand in brands)
         {
@@ -35,7 +35,7 @@ public class DbManipulations
     // категории в БД
     public void AddCategoriesToDb(PerfumeryDbContext db)
     {
-        var categories = WebsiteParser.categories;
+        var categories = ParserService.categories;
 
         foreach (string item in categories)
         {
