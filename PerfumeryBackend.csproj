@@ -28,6 +28,7 @@
 
   <ItemGroup>
     <Folder Include="DatabaseLayer\Services\" />
+    <Folder Include="Services\" />
   </ItemGroup>
 
 </Project>
