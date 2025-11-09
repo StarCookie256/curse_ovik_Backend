@@ -19,8 +19,6 @@ public partial class Customer
 
     public string? Password { get; set; }
 
-    public string AccessToken { get; set; } = null!;
-
     public string RefreshToken { get; set; } = null!;
 
     public virtual ICollection<Basket> Baskets { get; set; } = new List<Basket>();

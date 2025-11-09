@@ -155,15 +155,18 @@ public class ParserService
                             {
                                 productVarCategory = ParserInfo.Categories.Find(x => x.Name == findedVarCategory.Text) ?? productVarCategory;
                             }
-                            var productVarPrice = webProductVariant.FindElement(By.XPath(".//span[@itemprop='price']"));
-                            var productVarVolume = webProductVariant.FindElement(By.XPath(".//div[@class='table_volume pl-2']/span"));
+                            var findedVarPrice = webProductVariant.FindElement(By.XPath(".//span[@itemprop='price']"));
+                            var findedVarVolume = webProductVariant.FindElement(By.XPath(".//div[@class='table_volume pl-2']/span"));
+
+                            double productVarPrice = Convert.ToDouble(findedVarPrice.Text.Split('р')[0]);
+                            double productVarVolume = Convert.ToDouble(findedVarVolume.Text.Split('м')[0]);
 
                             ProductVariation productVariant = new ProductVariation()
                             {
                                 ProductId = newProduct.Id,
                                 CategoryId = productVarCategory.Id,
-                                Price = Convert.ToDouble(productVarPrice.Text),
-                                Volume = Convert.ToDouble(productVarVolume.Text),
+                                Price = productVarPrice,
+                                Volume = productVarVolume,
                                 Stock = _random.Next(42, 10000)
                             };
                             if (!_db.ProductVariations.Any(e => e.CategoryId == productVariant.CategoryId && e.ProductId == productVariant.ProductId 

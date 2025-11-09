@@ -27,8 +27,8 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Folder Include="ApplicationLayer\Services\" />
     <Folder Include="DatabaseLayer\Services\" />
-    <Folder Include="Services\" />
   </ItemGroup>
 
 </Project>
