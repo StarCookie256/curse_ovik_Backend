@@ -8,20 +8,15 @@ namespace PerfumeryBackend.DatabaseLayer.Repositories;
 
 public class CustomerRepository(PerfumeryDbContext context) : ICustomerRepository
 {
-    public Task AddUser(Customer customer)
-    {
-        throw new NotImplementedException();
-    }
-
     public async Task<IEnumerable<Customer>> GetAllAsync() =>
         await context.Customers
             .AsNoTracking()
             .ToListAsync();
 
-    public async Task<Customer?> GetByIdAsync(int id) =>
+    public async Task<Customer?> GetByEmailAsync(string email) =>
         await context.Customers
             .AsNoTracking()
-            .FirstOrDefaultAsync(x => x.Id == id);
+            .FirstOrDefaultAsync(x => x.Email == email);
 
     public async Task<Customer?> GetByRefreshToken(string refreshToken) =>
         await context.Customers
@@ -29,8 +24,30 @@ public class CustomerRepository(PerfumeryDbContext context) : ICustomerRepositor
             .Include(x => x.RefreshToken)
             .FirstOrDefaultAsync(x => x.RefreshToken!.Token == refreshToken);
 
-    public Task SetRefreshTokenById(int id, RefreshToken refreshToken)
+    public async Task SetRefreshTokenById(int id, RefreshToken refreshToken)
     {
-        throw new NotImplementedException();
+        Customer customer = await context.Customers.FirstOrDefaultAsync(x => x.Id == id)
+                ?? throw new InvalidOperationException("Can not set refresh token to not existing user");
+
+        Customer updatedCustomer = new()
+        {
+            RefreshToken = refreshToken,
+            Id = customer.Id,
+            Name = customer.Name,
+            Email = customer.Email,
+            Password = customer.Password,
+            Address = customer.Address,
+            Image = customer.Image,
+            Phone = customer.Phone,
+        };
+
+        context.Customers.Update(updatedCustomer);
+        await context.SaveChangesAsync();
+    }
+
+    public async Task AddCustomer(Customer customer)
+    {
+        await context.Customers.AddAsync(customer);
+        await context.SaveChangesAsync();
     }
 }

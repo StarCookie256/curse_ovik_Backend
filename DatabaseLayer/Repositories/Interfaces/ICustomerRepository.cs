@@ -6,8 +6,8 @@ namespace PerfumeryBackend.DatabaseLayer.Repositories.Interfaces;
 public interface ICustomerRepository
 {
     Task<IEnumerable<Customer>> GetAllAsync();
-    Task<Customer?> GetByIdAsync(int id);
+    Task<Customer?> GetByEmailAsync(string email);
     Task<Customer?> GetByRefreshToken(string refreshToken);
     Task SetRefreshTokenById(int id, RefreshToken refreshToken);
-    Task AddUser(Customer customer);
+    Task AddCustomer(Customer customer);
 }

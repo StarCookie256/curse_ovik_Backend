@@ -19,6 +19,9 @@ public partial class Customer
     public string? Address { get; set; }
 
     public string Password { get; set; } = null!;
+
+    public string PasswordSalt { get; set; } = null!;
+
     public RefreshToken RefreshToken { get; set; } = null!;
 
     //public string RefreshTokenToken { get; set; } = null!;

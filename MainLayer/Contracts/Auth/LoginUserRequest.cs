@@ -1,7 +1,8 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace PerfumeryBackend.ApplicationLayer.DTO.Auth;
-public record LoginDto(
+namespace PerfumeryBackend.MainLayer.Contracts.Auth;
+
+public record LoginUserRequest(
     [Required] string Email,
     [Required] string Password
 );

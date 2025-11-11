@@ -77,6 +77,9 @@ public partial class PerfumeryDbContext : DbContext
         modelBuilder.Entity<Customer>(entity =>
         {
             entity.HasIndex(e => e.Email, "IX_Customers_Email").IsUnique();
+
+            entity.Property(e => e.Id).HasColumnName("ID");
+
             entity.OwnsOne(e => e.RefreshToken, owned =>
             {
                 owned.Property(rt => rt.Token)
@@ -86,8 +89,6 @@ public partial class PerfumeryDbContext : DbContext
                 owned.Property(rt => rt.Expires)
                     .HasColumnName("RefreshToken_Expires");
             });
-
-            entity.Property(e => e.Id).HasColumnName("ID");
         });
 
         modelBuilder.Entity<Product>(entity =>
