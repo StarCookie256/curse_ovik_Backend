@@ -7,6 +7,7 @@ namespace PerfumeryBackend.DatabaseLayer;
 
 public partial class PerfumeryDbContext : DbContext
 {
+    private readonly IConfiguration _configuration;
     public PerfumeryDbContext()
     {
     }
@@ -17,26 +18,17 @@ public partial class PerfumeryDbContext : DbContext
     }
 
     public virtual DbSet<Basket> Baskets { get; set; }
-
     public virtual DbSet<BasketItem> BasketItems { get; set; }
-
     public virtual DbSet<Brand> Brands { get; set; }
-
     public virtual DbSet<Category> Categories { get; set; }
-
     public virtual DbSet<Country> Countries { get; set; }
-
     public virtual DbSet<Customer> Customers { get; set; }
-
     public virtual DbSet<Product> Products { get; set; }
-
     public virtual DbSet<ProductVariation> ProductVariations { get; set; }
-
     public virtual DbSet<Review> Reviews { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
-        => optionsBuilder.UseSqlite("Data Source=perfumeryDB.sqlite");
+        => optionsBuilder.UseSqlite(_configuration.GetConnectionString("DefaultConnection"));
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

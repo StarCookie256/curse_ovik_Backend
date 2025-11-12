@@ -4,14 +4,12 @@ using PerfumeryBackend.DatabaseLayer.Models;
 using PerfumeryBackend.DatabaseLayer;
 using System.Collections.ObjectModel;
 using System.Diagnostics.Metrics;
+using PerfumeryBackend.ParserLayer.Interfaces;
 
 namespace PerfumeryBackend.ParserLayer.Services;
 
-public class ParserService
+public class ParserService(PerfumeryDbContext _db) : IParserService
 {
-    // БД
-    private readonly PerfumeryDbContext _db = new PerfumeryDbContext();
-
     // НАСТРОЙКИ ПАРСЕРА
     public ChromeOptions options = new ChromeOptions();
     public const string GECKO = @"D:\Games\My_projects_c#\PerfumeryBackend\bin\Debug\net8.0\";
@@ -26,7 +24,6 @@ public class ParserService
     public Task ParseData()
     {
         options.AddArgument("--headless");
-
         DriverService.HideCommandPromptWindow = true;  // Скрыть консоль geckodriver
 
         DriverService.Start();
@@ -235,108 +232,3 @@ public class ParserService
     }
 
 }
-
-
-
-//using OpenQA.Selenium;
-//using OpenQA.Selenium.DevTools.V135.HeadlessExperimental;
-//using OpenQA.Selenium.Chrome;
-//using PerfumeryBackend;
-//using PerfumeryBackend.DatabaseLayer.Models;
-//using PerfumeryBackend.DatabaseLayer;
-//using PerfumeryBackend.ParserLayer.Services;
-//using Microsoft.AspNetCore.Http.HttpResults;
-//using PerfumeryBackend.ParserLayer;
-
-//namespace PerfumeryBackend.Services
-//{
-//    public class InitializationService : IInitializationService
-//    {
-//        private readonly PerfumeryDbContext _db = new PerfumeryDbContext();
-
-//        public Task DataToDB()
-//        {
-//            BrandsToDB(ParserInfo.Brands);
-//            CategoriesToDB(ParserInfo.Categories);
-//            CountriesToDB(ParserInfo.Countries);
-
-//            return Task.CompletedTask;
-//        }
-
-//        public Task BrandsToDB(List<string> importBrands)
-//        {
-//            var brands = importBrands;
-
-//            foreach (string brand in brands)
-//            {
-//                // если нет в таблице - добавляем
-//                if (!_db.Brands.Any(e => e.Name == brand))
-//                {
-//                    _db.Brands.Add(new Brand { Name = brand });
-//                    _db.SaveChanges();
-//                }
-
-//            }
-
-//            return Task.CompletedTask;
-//        }
-
-//        public Task CountriesToDB(List<string> importCountries)
-//        {
-//            var countries = importCountries;
-
-//            foreach (string country in countries)
-//            {
-//                // если нет в таблице - добавляем
-//                if (!_db.Countries.Any(e => e.Name == country))
-//                {
-//                    _db.Countries.Add(new Country { Name = country });
-//                    _db.SaveChanges();
-//                }
-
-//            }
-
-//            return Task.CompletedTask;
-//        }
-//    }
-//}
-
-// добавление записей в БД
-//public void AddDataToDb()
-//{
-//    using PerfumeryDbContext db = new PerfumeryDbContext();
-
-//    AddBrandsToDb(db);
-//}
-
-//// бренды в БД
-//public void AddBrandsToDb(PerfumeryDbContext db)
-//{
-//    var brands = WebsiteParser.brands;
-
-//    foreach (string brand in brands)
-//    {
-//        // если нет в таблице - добавляем
-//        if (!db.Brands.Any(e => e.Name == brand))
-//        {
-//            db.Brands.Add(new Brand { Name = brand });
-//        }
-
-//    }
-//}
-
-//// категории в БД
-//public void AddCategoriesToDb(PerfumeryDbContext db)
-//{
-//    var categories = WebsiteParser.categories;
-
-//    foreach (string item in categories)
-//    {
-//        // если нет в таблице - добавляем
-//        if (!db.Categories.Any(e => e.Name == item))
-//        {
-//            db.Categories.Add(new Category { Name = item });
-//        }
-
-//    }
-//}
