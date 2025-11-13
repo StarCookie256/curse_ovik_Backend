@@ -9,7 +9,8 @@ namespace PerfumeryBackend.ApplicationLayer.Services;
 public class AuthService(
     ICustomerRepository customerRepository,
     IPasswordHasherService passwordHasherService,
-    IJwtService jwtService) : IAuthService
+    IJwtService jwtService,
+    IAvatarService avatarService) : IAuthService
 {
     public async Task<AccessAndRefreshTokens?> Register(RegisterDto registerDto)
     {
@@ -19,13 +20,17 @@ public class AuthService(
 
         RefreshToken refreshToken = await jwtService.GenerateRefreshToken();
 
+        string avatarPath = await avatarService.SaveAvatarAsync(registerDto.Image);
+
         Customer customer = new()
         {
             Name = registerDto.Username,
             Email = registerDto.Email,
             Password = passwordHash,
             PasswordSalt = salt,
-            RefreshToken = refreshToken
+            RefreshToken = refreshToken,
+            Image = avatarPath,
+            Phone = registerDto.Phone
         };
 
         await customerRepository.AddCustomer(customer);

@@ -16,7 +16,8 @@ public class AuthController(IAuthService authService) : ControllerBase
             request.Username,
             request.Email,
             request.Password,
-            request.Phone));
+            request.Phone,
+            request.Image));
 
         if (success == null) 
         {

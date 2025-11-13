@@ -11,6 +11,7 @@ using PerfumeryBackend.DatabaseLayer.Repositories.Interfaces;
 using Microsoft.Extensions.Configuration;
 using PerfumeryBackend.ParserLayer.Interfaces;
 using PerfumeryBackend.ParserLayer.Services;
+using PerfumeryBackend.MainLayer.Services;
 
 namespace PerfumeryBackend
 {
@@ -21,7 +22,6 @@ namespace PerfumeryBackend
             var builder = WebApplication.CreateBuilder(args);
 
             ConfigureServices(builder);
-            builder.Services.AddSingleton<IParserService, ParserService>();
             
             var app = builder.Build();
 
@@ -82,7 +82,7 @@ namespace PerfumeryBackend
             builder.Services.AddDbContext<PerfumeryDbContext>(
                 options => {
                     options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection"));
-                });
+            });
 
             //DI
 
@@ -93,9 +93,14 @@ namespace PerfumeryBackend
             //--Auth
             builder.Services.AddScoped<IJwtService, JwtService>();
             builder.Services.AddScoped<IPasswordHasherService, PasswordHasherService>();
+            builder.Services.AddScoped<IAvatarService, AvatarService>();
 
             //Services
             builder.Services.AddScoped<IAuthService, AuthService>();
+
+            // Parser
+            builder.Services.AddScoped<IParserService, ParserService>();
+            builder.Services.AddHostedService<StartupParserService>();
         }
 
     }
