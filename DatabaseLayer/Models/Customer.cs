@@ -22,7 +22,7 @@ public partial class Customer
 
     public string PasswordSalt { get; set; } = null!;
 
-    public RefreshToken RefreshToken { get; set; } = null!;
+    public RefreshToken? RefreshToken { get; set; }
     //public string RefreshTokenToken { get; set; } = null!;
 
     //public string RefreshTokenExpires { get; set; } = null!;

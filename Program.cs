@@ -97,10 +97,6 @@ namespace PerfumeryBackend
 
             //Services
             builder.Services.AddScoped<IAuthService, AuthService>();
-
-            // Parser
-            builder.Services.AddScoped<IParserService, ParserService>();
-            builder.Services.AddHostedService<StartupParserService>();
         }
 
     }
