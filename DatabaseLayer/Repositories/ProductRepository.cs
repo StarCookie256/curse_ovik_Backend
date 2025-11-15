@@ -11,4 +11,17 @@ public class ProductRepository(PerfumeryDbContext context) : IProductRepository
             .Where(x => x.BrandId == brandId)
             .AsNoTracking()
             .ToListAsync();
+
+    public IQueryable<Product> GetAllProductsAsync() =>
+        context.Products
+        .AsQueryable();
+
+    public async Task<Product> GetProductByIdAsync(int id) =>
+        await context.Products
+        .AsNoTracking()
+        .FirstAsync(x => x.Id == id);
+
+    public async Task<int> GetProductsCountAsync() => 
+        await context.Products
+        .CountAsync();
 }

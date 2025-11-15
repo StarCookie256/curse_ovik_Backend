@@ -1,8 +1,9 @@
 ﻿using PerfumeryBackend.ApplicationLayer.DTO.ProductVariations;
+using PerfumeryBackend.DatabaseLayer.Models;
 
 namespace PerfumeryBackend.DatabaseLayer.Repositories.Interfaces;
 
 public interface IProductVariationsRepository
 {
-    Task<VolumesAndPricesDto> GetVolumesAndPricesByProductAsync(int productId);
+    Task<List<ProductVariation>> GetVariationsByProductAsync(int productId);
 }

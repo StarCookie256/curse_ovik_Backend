@@ -1,12 +1,13 @@
-﻿using PerfumeryBackend.DatabaseLayer.Models;
+﻿using PerfumeryBackend.ApplicationLayer.DTO.Products;
+using PerfumeryBackend.ApplicationLayer.Entities;
+using PerfumeryBackend.DatabaseLayer.Models;
 
 namespace PerfumeryBackend.ApplicationLayer.Interfaces;
 
 public interface IProductService
 {
-    public Task<List<Product>> GetProductsAsync();
-    public Task<List<Product>> GetProductsOfDayAsync();
+    public Task<List<ProductDto>> GetProductsOfDayAsync();
     public Task<Product> GetProductByIdAsync(int productId);
     public Task<List<Product>> GetProductsByBrand(int brandId); 
-    
+    public Task<PagedResult<ProductDto>> GetProductsBySearch(ProductSearchDto searchDto);
 }
