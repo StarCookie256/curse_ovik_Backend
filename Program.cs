@@ -9,9 +9,7 @@ using System.Text;
 using PerfumeryBackend.DatabaseLayer.Repositories;
 using PerfumeryBackend.DatabaseLayer.Repositories.Interfaces;
 using Microsoft.Extensions.Configuration;
-using PerfumeryBackend.ParserLayer.Interfaces;
-using PerfumeryBackend.ParserLayer.Services;
-using PerfumeryBackend.MainLayer.Services;
+//using PerfumeryBackend.MainLayer.Services;
 
 namespace PerfumeryBackend
 {
@@ -19,7 +17,11 @@ namespace PerfumeryBackend
     {
         public static void Main(string[] args)
         {
-            var builder = WebApplication.CreateBuilder(args);
+            var builder = WebApplication.CreateBuilder(new WebApplicationOptions
+            {
+                WebRootPath = "wwwroot",
+                ContentRootPath = Directory.GetCurrentDirectory()
+            });
 
             ConfigureServices(builder);
             
@@ -36,7 +38,7 @@ namespace PerfumeryBackend
 
             app.UseAuthorization();
 
-
+            app.UseStaticFiles();
             app.MapControllers();
 
             app.Run();
@@ -46,6 +48,16 @@ namespace PerfumeryBackend
         {
             string jwtKeyValue = builder.Configuration.GetSection("Jwt")["Key"]
                 ?? throw new Exception("Key value for jwt token was not founded");
+
+            builder.Services.AddCors(options =>
+            {
+                options.AddPolicy("AllowAll", policy =>
+                {
+                    policy.AllowAnyOrigin()   // Разрешить все источники
+                          .AllowAnyMethod()   // Разрешить все HTTP-методы
+                          .AllowAnyHeader();  // Разрешить все заголовки
+                });
+            });
 
             builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 .AddJwtBearer(JwtBearerDefaults.AuthenticationScheme, options =>
@@ -88,15 +100,20 @@ namespace PerfumeryBackend
 
             //Repositories
             builder.Services.AddScoped<ICustomerRepository, CustomerRepository>();
+            builder.Services.AddScoped<IProductRepository, ProductRepository>();
+            builder.Services.AddScoped<IProductVariationsRepository, ProductVariationsRepository>();
 
             //Service Dependencies
             //--Auth
             builder.Services.AddScoped<IJwtService, JwtService>();
             builder.Services.AddScoped<IPasswordHasherService, PasswordHasherService>();
             builder.Services.AddScoped<IAvatarService, AvatarService>();
+            
 
             //Services
             builder.Services.AddScoped<IAuthService, AuthService>();
+            builder.Services.AddScoped<IProductService, ProductService>();
+            builder.Services.AddScoped<IProductVariationService, ProductVariationService>();
         }
 
     }

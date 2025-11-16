@@ -18,6 +18,7 @@ public class ProductRepository(PerfumeryDbContext context) : IProductRepository
 
     public async Task<Product> GetProductByIdAsync(int id) =>
         await context.Products
+        .Include(x => x.Brand)
         .AsNoTracking()
         .FirstAsync(x => x.Id == id);
 
