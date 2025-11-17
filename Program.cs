@@ -36,6 +36,8 @@ namespace PerfumeryBackend
 
             app.UseHttpsRedirection();
 
+            app.UseCors("AllowAll");
+
             app.UseAuthorization();
 
             app.UseStaticFiles();
@@ -102,6 +104,8 @@ namespace PerfumeryBackend
             builder.Services.AddScoped<ICustomerRepository, CustomerRepository>();
             builder.Services.AddScoped<IProductRepository, ProductRepository>();
             builder.Services.AddScoped<IProductVariationsRepository, ProductVariationsRepository>();
+            builder.Services.AddScoped<IBrandRepository, BrandRepository>();
+            builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
 
             //Service Dependencies
             //--Auth
@@ -114,6 +118,8 @@ namespace PerfumeryBackend
             builder.Services.AddScoped<IAuthService, AuthService>();
             builder.Services.AddScoped<IProductService, ProductService>();
             builder.Services.AddScoped<IProductVariationService, ProductVariationService>();
+            builder.Services.AddScoped<IBrandService, BrandService>();
+            builder.Services.AddScoped<ICategoryService, CategoryService>();
         }
 
     }

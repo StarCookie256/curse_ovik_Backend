@@ -12,9 +12,9 @@ namespace PerfumeryBackend.MainLayer.Controllers;
 public class ProductController(IProductService productService) : ControllerBase
 {
     [HttpPost("bybrand")]
-    public async Task<IActionResult> ProductsByBrand([FromBody] int brandId)
+    public async Task<IActionResult> ProductsByBrand([FromBody] int BrandId)
     {
-        List<Product> success = await productService.GetProductsByBrand(brandId);
+        List<Product> success = await productService.GetProductsByBrand(BrandId);
 
         if (success == null)
         {
