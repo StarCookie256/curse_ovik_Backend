@@ -13,8 +13,33 @@ public class ProductService(
 {
     private static ProductsOfDay? _productsOfDay;
 
-    public async Task<List<Product>> GetProductsByBrand(int brandId) =>
-        await productRepository.GetProductsByBrandAsync(brandId);
+    public async Task<List<ProductDto>> GetProductsByBrand(int brandId)
+    {
+        var products = await productRepository.GetProductsByBrandAsync(brandId);
+
+        List<ProductDto> productDtos = new();
+
+        foreach (var pr in products)
+        {
+            var varProps = await productVariationService.GetVolumesAndPricesByProductAsync(pr.Id);
+            var categories = await productVariationService.GetCategoriesByProductAsync(pr.Id);
+
+            productDtos.Add(new ProductDto(
+                Id: pr.Id,
+                Name: pr.Name,
+                Brand: pr.Brand.Name,
+                Categories: categories,
+                FPrice: varProps.FPrice,
+                SPrice: varProps.SPrice,
+                FVolume: varProps.FVolume,
+                SVolume: varProps.SPrice,
+                Gender: pr.Gender,
+                Image: pr.Image
+            ));
+        }
+
+        return productDtos;
+    }
 
     public Task<Product> GetProductByIdAsync(int productId)
     {
@@ -33,6 +58,7 @@ public class ProductService(
         {
             if (_productsOfDay.LastUpdated < DateTime.UtcNow.AddDays(-1)) 
             {
+                _productsOfDay.ProductDtos.Clear();
                 _productsOfDay = await GenerateProductsOfDay();
 
                 return _productsOfDay.ProductDtos;
@@ -48,9 +74,12 @@ public class ProductService(
         Random random = new Random();
 
         int productsCount = await productRepository.GetProductsCountAsync();
-        for (int i = 0; i < 11; i++)
+        for (int i = 0; i < 10; i++)
         {
-            products.Add(await productRepository.GetProductByIdAsync(random.Next(1, productsCount)));
+            if(products.Count < 10)
+            {
+                products.Add(await productRepository.GetProductByIdAsync(random.Next(1, productsCount)));
+            }
         }
 
         List<ProductDto> productDtos = new();
@@ -74,50 +103,58 @@ public class ProductService(
             ));
         }
 
-        return new ProductsOfDay(productDtos, DateTime.Now);
+        return new ProductsOfDay(productDtos, DateTime.UtcNow);
     }
 
     public async Task<PagedResult<ProductDto>> GetProductsBySearch(ProductSearchDto searchDto)
     {
-        IQueryable<Product> products = productRepository.GetAllProductsAsync();
-
-        List<Product> filteredProducts = await ApplyFilters(products, searchDto.ProductFilters);
-
-        int totalCount = filteredProducts.Count();
-
-        List<Product> pagedProducts = filteredProducts
-            .Skip((searchDto.Pagination.Page - 1) * searchDto.Pagination.PageSize)
-            .Take(searchDto.Pagination.PageSize)
-            .ToList();
-
-        List<ProductDto> productDtos = new();
-
-        foreach (var pr in pagedProducts)
+        try
         {
-            var varProps = await productVariationService.GetVolumesAndPricesByProductAsync(pr.Id);
-            var categories = await productVariationService.GetCategoriesByProductAsync(pr.Id);
+            IQueryable<Product> products = await productRepository.GetProductsSearchAsync();
 
-            productDtos.Add(new ProductDto(
-                Id: pr.Id,
-                Name: pr.Name,
-                Brand: pr.Brand.Name,
-                Categories: categories,
-                FPrice: varProps.FPrice,
-                SPrice: varProps.SPrice,
-                FVolume: varProps.FVolume,
-                SVolume: varProps.SPrice,
-                Gender: pr.Gender,
-                Image: pr.Image
-            ));
+            List<Product> filteredProducts = await ApplyFilters(products, searchDto.ProductFilters);
+
+            int totalCount = filteredProducts.Count();
+
+            List<Product> pagedProducts = filteredProducts
+                .Skip((searchDto.Pagination.Page - 1) * searchDto.Pagination.PageSize)
+                .Take(searchDto.Pagination.PageSize)
+                .ToList();
+
+            List<ProductDto> productDtos = new();
+
+            foreach (var pr in pagedProducts)
+            {
+                var varProps = await productVariationService.GetVolumesAndPricesByProductAsync(pr.Id);
+                var categories = await productVariationService.GetCategoriesByProductAsync(pr.Id);
+
+                productDtos.Add(new ProductDto(
+                    Id: pr.Id,
+                    Name: pr.Name,
+                    Brand: pr.Brand.Name,
+                    Categories: categories,
+                    FPrice: varProps.FPrice,
+                    SPrice: varProps.SPrice,
+                    FVolume: varProps.FVolume,
+                    SVolume: varProps.SVolume,
+                    Gender: pr.Gender,
+                    Image: pr.Image
+                ));
+            }
+
+            return new PagedResult<ProductDto>
+            {
+                TotalCount = totalCount,
+                Items = productDtos,
+                Page = searchDto.Pagination.Page,
+                PageSize = searchDto.Pagination.PageSize
+            };
         }
-
-        return new PagedResult<ProductDto>
+        catch (Exception ex)
         {
-            TotalCount = totalCount,
-            Items = productDtos,
-            Page = searchDto.Pagination.Page,
-            PageSize = searchDto.Pagination.PageSize
-        };
+            Console.WriteLine($"Error in GetProductsBySearch: {ex.Message}");
+            throw;
+        }
     }
 
     private async Task<List<Product>> ApplyFilters(IQueryable<Product> products, ProductFiltersDto filters)
@@ -136,7 +173,7 @@ public class ProductService(
                 .Where(p => filters.Brands.Contains(p.Brand.Name));
         }
 
-        List<Product> finalProducts = products.ToList();
+        List<Product> finalProducts = await products.ToListAsync();
 
         List<ProductVariation> varList = new();
 
@@ -148,56 +185,50 @@ public class ProductService(
         // Фильтр по категориям
         if (filters.Categories != null && filters.Categories.Count != 0)
         {
-            List<ProductVariation> localVariants = new();
-            foreach (var variant in varList)
-            {
-                if(filters.Categories.Contains(variant.Category.Name))
-                    localVariants.Add(variant);
-            }
-
-            List<Product> bufferProducts = new();
-
-            foreach (var pr in finalProducts)
-            {
-                foreach (var variant in localVariants)
-                {
-                    if(bufferProducts.Count > 0)
-                    {
-                        if (!bufferProducts.Contains(pr) && variant.ProductId == pr.Id)
-                            bufferProducts.Add(pr);
-                    }   
-                }
-            }
-            finalProducts = bufferProducts;
-            varList = localVariants;
+            finalProducts = finalProducts
+                .Where(pr => varList
+                    .Where(v => v.ProductId == pr.Id)
+                    .Any(v => filters.Categories.Contains(v.Category.Name)))
+                .ToList();
+            varList = varList
+                .Where(v => filters.Categories.Contains(v.Category.Name))
+                .ToList();
         }
 
-        // фильтруем по цене
+        // Фильтр по цене
         if (filters.PriceValues != null && filters.PriceValues.Count == 2)
         {
-            List<Product> bufferProducts = new();
-            foreach (var pr in finalProducts)
+            var minPrice = (double)filters.PriceValues[0];
+            var maxPrice = (double)filters.PriceValues[1];
+
+            var filteredByPrice = new List<Product>();
+            foreach (var product in finalProducts)
             {
-                var varProps = await productVariationService.GetVolumesAndPricesByProductAsync(pr.Id);
-                if(varProps.FPrice <= (double)filters.PriceValues[1] && 
-                   varProps.SPrice >= (double)filters.PriceValues[0])
-                    bufferProducts.Add(pr);
+                var varProps = await productVariationService.GetVolumesAndPricesByProductAsync(product.Id);
+                if (varProps.FPrice >= minPrice && varProps.SPrice <= maxPrice)
+                {
+                    filteredByPrice.Add(product);
+                }
             }
-            finalProducts = bufferProducts;
+            finalProducts = filteredByPrice;
         }
 
         // Фильтр по объему
         if (filters.VolumeValues != null && filters.VolumeValues.Count == 2)
         {
-            List<Product> bufferProducts = new();
-            foreach (var pr in finalProducts)
+            var minVolume = (double)filters.VolumeValues[0];
+            var maxVolume = (double)filters.VolumeValues[1];
+
+            var filteredByVolume = new List<Product>();
+            foreach (var product in finalProducts)
             {
-                var varProps = await productVariationService.GetVolumesAndPricesByProductAsync(pr.Id);
-                if (varProps.FVolume <= (double)filters.VolumeValues[1] &&
-                   varProps.SVolume >= (double)filters.VolumeValues[0])
-                    bufferProducts.Add(pr);
+                var varProps = await productVariationService.GetVolumesAndPricesByProductAsync(product.Id);
+                if (varProps.FVolume >= minVolume && varProps.SVolume <= maxVolume)
+                {
+                    filteredByVolume.Add(product);
+                }
             }
-            finalProducts = bufferProducts;
+            finalProducts = filteredByVolume;
         }
 
         return finalProducts;
