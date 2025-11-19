@@ -11,7 +11,7 @@ public class CategoryService(ICategoryRepository categoryRepository) : ICategory
 
     public async Task<Category> GetCategoryByIdAsync(int id)
     {
-        var category = await categoryRepository.GetCategoryByIdAsync(id);
+        Category category = await categoryRepository.GetCategoryByIdAsync(id);
 
         if (category == null)
         {

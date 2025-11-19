@@ -1,5 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using PerfumeryBackend.ApplicationLayer.DTO.Brand;
 using PerfumeryBackend.ApplicationLayer.DTO.Products;
+using PerfumeryBackend.ApplicationLayer.DTO.ProductVariations;
 using PerfumeryBackend.ApplicationLayer.Entities;
 using PerfumeryBackend.ApplicationLayer.Interfaces;
 using PerfumeryBackend.DatabaseLayer.Models;
@@ -27,7 +29,7 @@ public class ProductService(
             productDtos.Add(new ProductDto(
                 Id: pr.Id,
                 Name: pr.Name,
-                Brand: pr.Brand.Name,
+                Brand: new BrandDto(Id: pr.Brand.Id, Name: pr.Brand.Name),
                 Categories: categories,
                 FPrice: varProps.FPrice,
                 SPrice: varProps.SPrice,
@@ -39,11 +41,6 @@ public class ProductService(
         }
 
         return productDtos;
-    }
-
-    public Task<Product> GetProductByIdAsync(int productId)
-    {
-        throw new NotImplementedException();
     }
 
     public async Task<List<ProductDto>> GetProductsOfDayAsync()
@@ -92,7 +89,7 @@ public class ProductService(
             productDtos.Add(new ProductDto(
                 Id: pr.Id,
                 Name: pr.Name,
-                Brand: pr.Brand.Name,
+                Brand: new BrandDto(Id: pr.Brand.Id, Name: pr.Brand.Name),
                 Categories: categories,
                 FPrice: varProps.FPrice,
                 SPrice: varProps.SPrice,
@@ -110,11 +107,11 @@ public class ProductService(
     {
         try
         {
-            IQueryable<Product> products = await productRepository.GetProductsSearchAsync();
+            List<Product> products = await productRepository.GetProductsSearchAsync();
 
             List<Product> filteredProducts = await ApplyFilters(products, searchDto.ProductFilters);
 
-            int totalCount = filteredProducts.Count();
+            int totalCount = filteredProducts.Count;
 
             List<Product> pagedProducts = filteredProducts
                 .Skip((searchDto.Pagination.Page - 1) * searchDto.Pagination.PageSize)
@@ -131,7 +128,7 @@ public class ProductService(
                 productDtos.Add(new ProductDto(
                     Id: pr.Id,
                     Name: pr.Name,
-                    Brand: pr.Brand.Name,
+                    Brand: new BrandDto(Id: pr.Brand.Id, Name: pr.Brand.Name),
                     Categories: categories,
                     FPrice: varProps.FPrice,
                     SPrice: varProps.SPrice,
@@ -153,39 +150,46 @@ public class ProductService(
         catch (Exception ex)
         {
             Console.WriteLine($"Error in GetProductsBySearch: {ex.Message}");
-            throw;
+            return null;
         }
     }
 
-    private async Task<List<Product>> ApplyFilters(IQueryable<Product> products, ProductFiltersDto filters)
+    private async Task<List<Product>> ApplyFilters(List<Product> products, ProductFiltersDto filters)
     {
         // Фильтр по гендеру
         if (filters.Gender != null && filters.Gender.Count != 0)
         {
-            products = products.Where(p => filters.Gender.Contains(p.Gender));
+            products = products.Where(p => filters.Gender.Contains(p.Gender)).ToList();
         }
 
         // Фильтр по брендам
         if (filters.Brands != null && filters.Brands.Count != 0)
         {
             products = products
-                .Include(p => p.Brand)  // Загружаем связанные данные бренда
-                .Where(p => filters.Brands.Contains(p.Brand.Name));
+                .Where(p => filters.Brands.Contains(p.Brand.Name))
+                .ToList();
         }
-
-        List<Product> finalProducts = await products.ToListAsync();
 
         List<ProductVariation> varList = new();
 
-        foreach(var finalPr in finalProducts)
+        foreach(var pr in products)
         {
-            varList.AddRange(await productVariationService.GetVariationsByProductAsync(finalPr.Id));
+            List<ProductVariation> prVars = await productVariationService.GetVariationsByProductAsync(pr.Id);
+            if (prVars != null)
+                varList.AddRange(prVars);
+        }
+
+        for (int i = products.Count - 1; i >= 0; i--)
+        {
+            if(products.Contains(products[i]))
+                if (!varList.Any(x => x.ProductId == products[i].Id))
+                    products.Remove(products[i]);
         }
 
         // Фильтр по категориям
         if (filters.Categories != null && filters.Categories.Count != 0)
         {
-            finalProducts = finalProducts
+            products = products
                 .Where(pr => varList
                     .Where(v => v.ProductId == pr.Id)
                     .Any(v => filters.Categories.Contains(v.Category.Name)))
@@ -202,7 +206,7 @@ public class ProductService(
             var maxPrice = (double)filters.PriceValues[1];
 
             var filteredByPrice = new List<Product>();
-            foreach (var product in finalProducts)
+            foreach (var product in products)
             {
                 var varProps = await productVariationService.GetVolumesAndPricesByProductAsync(product.Id);
                 if (varProps.FPrice >= minPrice && varProps.SPrice <= maxPrice)
@@ -210,7 +214,7 @@ public class ProductService(
                     filteredByPrice.Add(product);
                 }
             }
-            finalProducts = filteredByPrice;
+            products = filteredByPrice;
         }
 
         // Фильтр по объему
@@ -220,7 +224,7 @@ public class ProductService(
             var maxVolume = (double)filters.VolumeValues[1];
 
             var filteredByVolume = new List<Product>();
-            foreach (var product in finalProducts)
+            foreach (var product in products)
             {
                 var varProps = await productVariationService.GetVolumesAndPricesByProductAsync(product.Id);
                 if (varProps.FVolume >= minVolume && varProps.SVolume <= maxVolume)
@@ -228,9 +232,48 @@ public class ProductService(
                     filteredByVolume.Add(product);
                 }
             }
-            finalProducts = filteredByVolume;
+            products = filteredByVolume;
         }
 
-        return finalProducts;
+        return products;
+    }
+
+    public async Task<ProductPageDto> GetProductForPageByIdAsync(int productId)
+    {
+        Product product = await productRepository.GetProductForPageByIdAsync(productId);
+        if (product == null) return null;
+
+        List<string> categories = await productVariationService.GetCategoriesByProductAsync(product.Id);
+        List<ProductVariation> productVariations = await productVariationService.GetVariationsByProductAsync(product.Id);
+
+        List<ProductVariationDto> productVariationDtos = new();
+        if (productVariations != null) 
+        {
+            foreach (var variation in productVariations) 
+            {
+                productVariationDtos.Add(new ProductVariationDto(
+                    variation.Id,
+                    product.Id,
+                    variation.Category.Name,
+                    variation.Price,
+                    variation.Volume,
+                    variation.Stock));
+            }
+        }
+
+        ProductPageDto productPageDto = new(
+            Id: product.Id,
+            Name: product.Name,
+            Brand: new BrandDto(Id: product.Brand.Id, Name: product.Brand.Name),
+            Categories: categories,
+            Gender: product.Gender,
+            Image: product.Image,
+            Country: product.Country.Name,
+            ManufactureYear: product.ManufactureYear,
+            ExpirationDate: product.ExpirationDate,
+            ProductVariations: productVariationDtos
+        );
+
+        return productPageDto;
     }
 }

@@ -1,4 +1,5 @@
-﻿using PerfumeryBackend.ApplicationLayer.DTO.ProductVariations;
+﻿using OpenQA.Selenium.Internal;
+using PerfumeryBackend.ApplicationLayer.DTO.ProductVariations;
 using PerfumeryBackend.ApplicationLayer.Interfaces;
 using PerfumeryBackend.DatabaseLayer.Models;
 using PerfumeryBackend.DatabaseLayer.Repositories.Interfaces;
@@ -27,6 +28,11 @@ public class ProductVariationService(IProductVariationsRepository productVariati
     public async Task<VolumesAndPricesDto> GetVolumesAndPricesByProductAsync(int productId)
     {
         List<ProductVariation> variations = await productVariationsRepository.GetVariationsByProductAsync(productId);
+
+        if(variations.Count <= 0)
+        {
+            return null;
+        }
 
         double? fVolume = variations[0].Volume;
         double? sVolume = variations[0].Volume;

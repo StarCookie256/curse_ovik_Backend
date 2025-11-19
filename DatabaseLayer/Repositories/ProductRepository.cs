@@ -14,8 +14,18 @@ public class ProductRepository(PerfumeryDbContext context) : IProductRepository
             .AsNoTracking()
             .ToListAsync();
 
-    public async Task<IQueryable<Product>> GetProductsSearchAsync() =>
-        context.Products.AsQueryable();
+    public async Task<List<Product>> GetProductsSearchAsync() =>
+        await context.Products
+            .Include(p => p.Brand)
+            .AsNoTracking()
+            .ToListAsync();
+
+    public async Task<Product> GetProductForPageByIdAsync(int id) =>
+        await context.Products
+        .Include(x => x.Brand)
+        .Include(x => x.Country)
+        .AsNoTracking()
+        .FirstAsync(x => x.Id == id);
 
     public async Task<Product> GetProductByIdAsync(int id) =>
         await context.Products

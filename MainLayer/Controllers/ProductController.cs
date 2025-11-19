@@ -58,4 +58,17 @@ public class ProductController(IProductService productService) : ControllerBase
 
         return Ok(success);
     }
+
+    [HttpPost("pageinfo")]
+    public async Task<IActionResult> ProductPageInfo([FromBody] int productId)
+    {
+        ProductPageDto success = await productService.GetProductForPageByIdAsync(productId);
+
+        if (success == null)
+        {
+            return BadRequest("Product page fetch was failed!");
+        }
+
+        return Ok(success);
+    }
 }

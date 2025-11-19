@@ -1,11 +1,13 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using PerfumeryBackend.ApplicationLayer.DTO.Brand;
+using PerfumeryBackend.DatabaseLayer.Models;
+using System.ComponentModel.DataAnnotations;
 
 namespace PerfumeryBackend.ApplicationLayer.DTO.Products;
 
 public record ProductDto(
     [Required] int Id,
     [Required] string Name,
-    [Required] string Brand,
+    [Required] BrandDto Brand,
     [Required] List<string> Categories,
     [Required] double FPrice,
     [Required] double SPrice,
