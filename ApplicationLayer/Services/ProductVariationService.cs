@@ -8,6 +8,9 @@ namespace PerfumeryBackend.ApplicationLayer.Services;
 
 public class ProductVariationService(IProductVariationsRepository productVariationsRepository) : IProductVariationService
 {
+    public async Task<bool> HaveVariationsOfProductAsync(int productId) =>
+        await productVariationsRepository.HaveVariationsOfProductAsync(productId);
+
     public async Task<List<string>> GetCategoriesByProductAsync(int productId)
     {
         List<ProductVariation> variations = await productVariationsRepository.GetVariationsByProductAsync(productId);

@@ -6,4 +6,5 @@ namespace PerfumeryBackend.DatabaseLayer.Repositories.Interfaces;
 public interface IProductVariationsRepository
 {
     Task<List<ProductVariation>> GetVariationsByProductAsync(int productId);
+    Task<bool> HaveVariationsOfProductAsync(int productId);
 }

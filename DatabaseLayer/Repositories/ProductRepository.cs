@@ -14,11 +14,11 @@ public class ProductRepository(PerfumeryDbContext context) : IProductRepository
             .AsNoTracking()
             .ToListAsync();
 
-    public async Task<List<Product>> GetProductsSearchAsync() =>
-        await context.Products
+    public IQueryable<Product> GetProductsSearchAsync() =>
+         context.Products
             .Include(p => p.Brand)
             .AsNoTracking()
-            .ToListAsync();
+            .AsQueryable();
 
     public async Task<Product> GetProductForPageByIdAsync(int id) =>
         await context.Products

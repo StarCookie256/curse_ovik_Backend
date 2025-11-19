@@ -13,4 +13,9 @@ public class ProductVariationsRepository(PerfumeryDbContext context) : IProductV
             .Where(x => x.ProductId == productId)
             .AsNoTracking()
             .ToListAsync();
+
+    public async Task<bool> HaveVariationsOfProductAsync(int productId) =>
+        await context.ProductVariations
+            .AsNoTracking()
+            .AnyAsync(x => x.ProductId == productId);
 }

@@ -107,16 +107,16 @@ public class ProductService(
     {
         try
         {
-            List<Product> products = await productRepository.GetProductsSearchAsync();
+            IQueryable<Product> products = productRepository.GetProductsSearchAsync();
 
-            List<Product> filteredProducts = await ApplyFilters(products, searchDto.ProductFilters);
+            IQueryable<Product> filteredProducts = await ApplyFilters(products, searchDto.ProductFilters);
 
-            int totalCount = filteredProducts.Count;
+            int totalCount = await filteredProducts.CountAsync();
 
-            List<Product> pagedProducts = filteredProducts
+            List<Product> pagedProducts = await filteredProducts
                 .Skip((searchDto.Pagination.Page - 1) * searchDto.Pagination.PageSize)
                 .Take(searchDto.Pagination.PageSize)
-                .ToList();
+                .ToListAsync();
 
             List<ProductDto> productDtos = new();
 
@@ -154,49 +154,33 @@ public class ProductService(
         }
     }
 
-    private async Task<List<Product>> ApplyFilters(List<Product> products, ProductFiltersDto filters)
+    private async Task<IQueryable<Product>> ApplyFilters(IQueryable<Product> products, ProductFiltersDto filters)
     {
+        // Загружаем вариации вместе с продуктами
+        products = products.Include(p => p.ProductVariations)
+                           .ThenInclude(pv => pv.Category);
+
         // Фильтр по гендеру
         if (filters.Gender != null && filters.Gender.Count != 0)
         {
-            products = products.Where(p => filters.Gender.Contains(p.Gender)).ToList();
+            products = products.Where(p => filters.Gender.Contains(p.Gender));
         }
 
         // Фильтр по брендам
         if (filters.Brands != null && filters.Brands.Count != 0)
         {
             products = products
-                .Where(p => filters.Brands.Contains(p.Brand.Name))
-                .ToList();
+                .Where(p => filters.Brands.Contains(p.Brand.Name));
         }
 
-        List<ProductVariation> varList = new();
-
-        foreach(var pr in products)
-        {
-            List<ProductVariation> prVars = await productVariationService.GetVariationsByProductAsync(pr.Id);
-            if (prVars != null)
-                varList.AddRange(prVars);
-        }
-
-        for (int i = products.Count - 1; i >= 0; i--)
-        {
-            if(products.Contains(products[i]))
-                if (!varList.Any(x => x.ProductId == products[i].Id))
-                    products.Remove(products[i]);
-        }
+        // Фильтр по наличию вариаций
+        products = products.Where(p => p.ProductVariations.Any());
 
         // Фильтр по категориям
         if (filters.Categories != null && filters.Categories.Count != 0)
         {
-            products = products
-                .Where(pr => varList
-                    .Where(v => v.ProductId == pr.Id)
-                    .Any(v => filters.Categories.Contains(v.Category.Name)))
-                .ToList();
-            varList = varList
-                .Where(v => filters.Categories.Contains(v.Category.Name))
-                .ToList();
+            products = products.Where(p => p.ProductVariations
+                .Any(pv => filters.Categories.Contains(pv.Category.Name)));
         }
 
         // Фильтр по цене
@@ -205,16 +189,8 @@ public class ProductService(
             var minPrice = (double)filters.PriceValues[0];
             var maxPrice = (double)filters.PriceValues[1];
 
-            var filteredByPrice = new List<Product>();
-            foreach (var product in products)
-            {
-                var varProps = await productVariationService.GetVolumesAndPricesByProductAsync(product.Id);
-                if (varProps.FPrice >= minPrice && varProps.SPrice <= maxPrice)
-                {
-                    filteredByPrice.Add(product);
-                }
-            }
-            products = filteredByPrice;
+            products = products.Where(p => p.ProductVariations
+                .Any(pv => pv.Price >= minPrice && pv.Price <= maxPrice));
         }
 
         // Фильтр по объему
@@ -223,16 +199,8 @@ public class ProductService(
             var minVolume = (double)filters.VolumeValues[0];
             var maxVolume = (double)filters.VolumeValues[1];
 
-            var filteredByVolume = new List<Product>();
-            foreach (var product in products)
-            {
-                var varProps = await productVariationService.GetVolumesAndPricesByProductAsync(product.Id);
-                if (varProps.FVolume >= minVolume && varProps.SVolume <= maxVolume)
-                {
-                    filteredByVolume.Add(product);
-                }
-            }
-            products = filteredByVolume;
+            products = products.Where(p => p.ProductVariations
+                .Any(pv => pv.Volume >= minVolume && pv.Volume <= maxVolume));
         }
 
         return products;
