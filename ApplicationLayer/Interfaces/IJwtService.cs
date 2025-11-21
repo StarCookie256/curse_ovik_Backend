@@ -7,4 +7,5 @@ public interface IJwtService
 {
     public Task<string> GenerateAccessToken(Customer customer);
     public Task<RefreshToken> GenerateRefreshToken();
+    Task<int> GetCustomerIdFromAccessToken(string accessToken);
 }

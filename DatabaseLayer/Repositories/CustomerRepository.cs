@@ -50,4 +50,9 @@ public class CustomerRepository(PerfumeryDbContext context) : ICustomerRepositor
         await context.Customers.AddAsync(customer);
         await context.SaveChangesAsync();
     }
+
+    public async Task<Customer?> GetByIdAsync(int id) =>
+        await context.Customers
+            .AsNoTracking()
+            .FirstAsync(x => x.Id == id);
 }

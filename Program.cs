@@ -8,7 +8,6 @@ using PerfumeryBackend.DatabaseLayer;
 using System.Text;
 using PerfumeryBackend.DatabaseLayer.Repositories;
 using PerfumeryBackend.DatabaseLayer.Repositories.Interfaces;
-using Microsoft.Extensions.Configuration;
 //using PerfumeryBackend.MainLayer.Services;
 
 namespace PerfumeryBackend
@@ -38,6 +37,7 @@ namespace PerfumeryBackend
 
             app.UseCors("AllowAll");
 
+            app.UseAuthentication();
             app.UseAuthorization();
 
             app.UseStaticFiles();
@@ -87,6 +87,7 @@ namespace PerfumeryBackend
 
             //Contollers
             builder.Services.AddControllers();
+            builder.Services.AddHttpContextAccessor();
 
             //Swagger     
             builder.Services.AddEndpointsApiExplorer();

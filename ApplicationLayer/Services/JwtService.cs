@@ -49,5 +49,34 @@ namespace PerfumeryBackend.ApplicationLayer.Services
 
             return Task.FromResult(RefreshToken.Create(token, expired));
         }
+
+        public Task<int> GetCustomerIdFromAccessToken(string accessToken)
+        {
+            JwtSecurityTokenHandler tokenHandler = new JwtSecurityTokenHandler();
+            IConfigurationSection jwtSettings = configuration.GetSection("Jwt");
+            byte[] key = Encoding.UTF8.GetBytes(jwtSettings["Key"])
+                ?? throw new Exception("Key value for JWT token was not found!!!");
+
+            try
+            {
+                var customerToken = tokenHandler.ValidateToken(accessToken, new TokenValidationParameters
+                {
+                    ValidateIssuerSigningKey = true,
+                    IssuerSigningKey = new SymmetricSecurityKey(key),
+                    ValidateIssuer = false,
+                    ValidateAudience = false,
+                    ValidateLifetime = true,
+                    ClockSkew = TimeSpan.Zero
+                }, out SecurityToken validatedToken);
+
+
+                int customerId = Convert.ToInt32(customerToken.FindFirst(JwtRegisteredClaimNames.Jti)?.Value);
+                return Task.FromResult(customerId);
+            }
+            catch
+            {
+                return null;
+            }
+        }
     }
 }
