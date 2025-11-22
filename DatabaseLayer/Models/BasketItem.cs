@@ -7,17 +7,13 @@ public partial class BasketItem
 {
     public int Id { get; set; }
 
-    public int? BasketId { get; set; }
+    public int BasketId { get; set; }
 
-    public int? ProductId { get; set; }
+    public int ProductVariationId { get; set; }
 
-    public int? Quantity { get; set; }
+    public int? Stock { get; set; }
 
-    public double? Price { get; set; }
+    public virtual Basket Basket { get; set; } = null!;
 
-    public int? Volume { get; set; }
-
-    public virtual Basket? Basket { get; set; }
-
-    public virtual Product? Product { get; set; }
+    public virtual ProductVariation ProductVariation { get; set; } = null!;
 }

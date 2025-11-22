@@ -8,6 +8,7 @@ using PerfumeryBackend.DatabaseLayer;
 using System.Text;
 using PerfumeryBackend.DatabaseLayer.Repositories;
 using PerfumeryBackend.DatabaseLayer.Repositories.Interfaces;
+using Microsoft.Extensions.FileProviders;
 //using PerfumeryBackend.MainLayer.Services;
 
 namespace PerfumeryBackend
@@ -55,9 +56,17 @@ namespace PerfumeryBackend
             {
                 options.AddPolicy("AllowAll", policy =>
                 {
-                    policy.AllowAnyOrigin()   // Разрешить все источники
-                          .AllowAnyMethod()   // Разрешить все HTTP-методы
-                          .AllowAnyHeader();  // Разрешить все заголовки
+                    policy.WithOrigins(
+                        "http://localhost:3000",
+                        "https://localhost:3000",
+                        "http://localhost:4200",
+                        "https://localhost:4200",
+                        "http://localhost:7263",
+                        "https://localhost:7263"
+                    )
+                    .AllowAnyMethod()
+                    .AllowAnyHeader()
+                    .AllowCredentials();
                 });
             });
 
@@ -107,6 +116,8 @@ namespace PerfumeryBackend
             builder.Services.AddScoped<IProductVariationsRepository, ProductVariationsRepository>();
             builder.Services.AddScoped<IBrandRepository, BrandRepository>();
             builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
+            builder.Services.AddScoped<IBasketRepository, BasketRepository>();
+            builder.Services.AddScoped<IBasketItemsRepository, BasketItemRepository>();
 
             //Service Dependencies
             //--Auth
@@ -121,6 +132,8 @@ namespace PerfumeryBackend
             builder.Services.AddScoped<IProductVariationService, ProductVariationService>();
             builder.Services.AddScoped<IBrandService, BrandService>();
             builder.Services.AddScoped<ICategoryService, CategoryService>();
+            builder.Services.AddScoped<IBasketService, BasketService>();
+            builder.Services.AddScoped<ICustomerService, CustomerService>();
         }
 
     }

@@ -6,7 +6,8 @@ using PerfumeryBackend.DatabaseLayer.Repositories.Interfaces;
 namespace PerfumeryBackend.ApplicationLayer.Services;
 
 public class CustomerService(
-    ICustomerRepository customerRepository) : ICustomerService
+    ICustomerRepository customerRepository,
+    IAvatarService avatarService) : ICustomerService
 {
     public async Task<CustomerData?> GetCabinet(int customerId)
     {
@@ -19,7 +20,7 @@ public class CustomerService(
 
         return new CustomerData(
             Id: customer.Id,
-            Image: customer.Image,
+            Image: avatarService.GetAvatarUrl(customer.Image),
             Name: customer.Name,
             Email: customer.Email,
             Phone: customer.Phone,

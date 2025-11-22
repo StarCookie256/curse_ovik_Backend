@@ -4,6 +4,7 @@ namespace PerfumeryBackend.ApplicationLayer.Services;
 
 public class AvatarService : IAvatarService
 {
+    private readonly IHttpContextAccessor _httpContextAccessor;
     private readonly string _avatarsFolder;
     private readonly string[] _allowedExtensions = { ".jpg", ".jpeg", ".png", ".gif", ".webp" };
     private readonly long _maxFileSize = 5 * 1024 * 1024;
@@ -39,6 +40,17 @@ public class AvatarService : IAvatarService
         await avatarFile.CopyToAsync(stream);
 
         // Возвращаем относительный путь для БД
-        return $"avatars/{fileName}";
+        return fileName;
+    }
+
+    public string GetAvatarUrl(string fileName)
+    {
+        if (string.IsNullOrEmpty(fileName))
+            return null;
+
+        //var request = _httpContextAccessor.HttpContext.Request;
+        //var baseUrl = $"{request.Scheme}://{request.Host}";
+
+        return $"/avatars/{fileName}";
     }
 }

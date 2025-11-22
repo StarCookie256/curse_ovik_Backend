@@ -17,6 +17,8 @@ public partial class ProductVariation
 
     public int? Stock { get; set; }
 
+    public virtual ICollection<BasketItem> BasketItems { get; set; } = new List<BasketItem>();
+
     public virtual Category? Category { get; set; }
 
     public virtual Product? Product { get; set; }

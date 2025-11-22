@@ -84,6 +84,7 @@ public class ProductService(
         foreach (var pr in products)
         {
             var varProps = await productVariationService.GetVolumesAndPricesByProductAsync(pr.Id);
+            if(varProps == null) { continue; }
             var categories = await productVariationService.GetCategoriesByProductAsync(pr.Id);
 
             productDtos.Add(new ProductDto(
@@ -109,7 +110,7 @@ public class ProductService(
         {
             IQueryable<Product> products = productRepository.GetProductsSearchAsync();
 
-            IQueryable<Product> filteredProducts = await ApplyFilters(products, searchDto.ProductFilters);
+            IQueryable<Product> filteredProducts = ApplyFilters(products, searchDto.ProductFilters);
 
             int totalCount = await filteredProducts.CountAsync();
 
@@ -154,7 +155,7 @@ public class ProductService(
         }
     }
 
-    private async Task<IQueryable<Product>> ApplyFilters(IQueryable<Product> products, ProductFiltersDto filters)
+    private IQueryable<Product> ApplyFilters(IQueryable<Product> products, ProductFiltersDto filters)
     {
         // Загружаем вариации вместе с продуктами
         products = products.Include(p => p.ProductVariations)

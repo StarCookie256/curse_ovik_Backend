@@ -1,4 +1,5 @@
-﻿using PerfumeryBackend.ApplicationLayer.DTO.Auth;
+﻿using Microsoft.AspNetCore.Mvc;
+using PerfumeryBackend.ApplicationLayer.DTO.Auth;
 using PerfumeryBackend.ApplicationLayer.Entities;
 using PerfumeryBackend.ApplicationLayer.Interfaces;
 using PerfumeryBackend.DatabaseLayer.Models;
@@ -14,6 +15,9 @@ public class AuthService(
 {
     public async Task<AccessAndRefreshTokens?> Register(RegisterDto registerDto)
     {
+        if (await customerRepository.CustomerAlreadyExist(registerDto.Email))
+            return null;
+
         string salt = passwordHasherService.GenerateSalt();
         string passwordWithSalt = registerDto.Password + salt;
         string passwordHash = passwordHasherService.Generate(passwordWithSalt);
@@ -67,7 +71,7 @@ public class AuthService(
     {
         Customer? customer = await customerRepository.GetByRefreshToken(refreshTokenDto.RefreshToken);
 
-        if (customer == null)
+        if (customer == null || customer.RefreshToken.IsExpired)
         {
             return null;
         }

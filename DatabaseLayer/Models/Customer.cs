@@ -23,11 +23,6 @@ public partial class Customer
     public string PasswordSalt { get; set; } = null!;
 
     public RefreshToken? RefreshToken { get; set; }
-    //public string RefreshTokenToken { get; set; } = null!;
-
-    //public string RefreshTokenExpires { get; set; } = null!;
 
     public virtual ICollection<Basket> Baskets { get; set; } = new List<Basket>();
-
-    public virtual ICollection<Review> Reviews { get; set; } = new List<Review>();
 }

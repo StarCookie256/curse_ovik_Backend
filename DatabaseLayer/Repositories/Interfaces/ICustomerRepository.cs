@@ -11,4 +11,5 @@ public interface ICustomerRepository
     Task<Customer?> GetByIdAsync(int id);
     Task SetRefreshTokenById(int id, RefreshToken refreshToken);
     Task AddCustomer(Customer customer);
+    Task<bool> CustomerAlreadyExist(string customerEmail);
 }

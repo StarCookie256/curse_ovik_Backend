@@ -10,8 +10,14 @@ namespace PerfumeryBackend.MainLayer.Controllers;
 public class AuthController(IAuthService authService) : ControllerBase
 {
     [HttpPost("register")]
-    public async Task<IActionResult> Register([FromBody] RegisterUserRequest request)
+    [Consumes("multipart/form-data")]
+    public async Task<IActionResult> Register([FromForm] RegisterUserRequest request)
     {
+        if (request.Image == null || request.Image.Length == 0)
+        {
+            return BadRequest("Image is required");
+        }
+
         AccessAndRefreshTokens? success = await authService.Register(new RegisterDto(
             request.Username,
             request.Email,

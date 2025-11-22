@@ -23,13 +23,9 @@ public partial class Product
 
     public string? ExpirationDate { get; set; }
 
-    public virtual ICollection<BasketItem> BasketItems { get; set; } = new List<BasketItem>();
-
     public virtual Brand? Brand { get; set; }
 
     public virtual Country? Country { get; set; }
 
     public virtual ICollection<ProductVariation> ProductVariations { get; set; } = new List<ProductVariation>();
-
-    public virtual ICollection<Review> Reviews { get; set; } = new List<Review>();
 }

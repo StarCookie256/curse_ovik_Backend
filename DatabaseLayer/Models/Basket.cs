@@ -9,10 +9,6 @@ public partial class Basket
 
     public int? CustomerId { get; set; }
 
-    public string? Date { get; set; }
-
-    public string? Status { get; set; }
-
     public double? TotalPrice { get; set; }
 
     public virtual ICollection<BasketItem> BasketItems { get; set; } = new List<BasketItem>();

@@ -26,7 +26,7 @@ public class CustomerRepository(PerfumeryDbContext context) : ICustomerRepositor
 
     public async Task SetRefreshTokenById(int id, RefreshToken refreshToken)
     {
-        Customer customer = await context.Customers.FirstOrDefaultAsync(x => x.Id == id)
+        Customer customer = await context.Customers.AsNoTracking().FirstOrDefaultAsync(x => x.Id == id)
                 ?? throw new InvalidOperationException("Can not set refresh token to not existing user");
 
         Customer updatedCustomer = new()
@@ -36,6 +36,7 @@ public class CustomerRepository(PerfumeryDbContext context) : ICustomerRepositor
             Name = customer.Name,
             Email = customer.Email,
             Password = customer.Password,
+            PasswordSalt = customer.PasswordSalt,
             Address = customer.Address,
             Image = customer.Image,
             Phone = customer.Phone,
@@ -55,4 +56,9 @@ public class CustomerRepository(PerfumeryDbContext context) : ICustomerRepositor
         await context.Customers
             .AsNoTracking()
             .FirstAsync(x => x.Id == id);
+
+    public async Task<bool> CustomerAlreadyExist(string customerEmail) =>
+        await context.Customers
+            .AsNoTracking()
+            .AnyAsync(x => x.Email == customerEmail);
 }

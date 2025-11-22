@@ -7,7 +7,6 @@ namespace PerfumeryBackend.DatabaseLayer;
 
 public partial class PerfumeryDbContext : DbContext
 {
-    //private readonly IConfiguration _configuration = null!;
     //public PerfumeryDbContext()
     //{
     //}
@@ -33,10 +32,9 @@ public partial class PerfumeryDbContext : DbContext
 
     public virtual DbSet<ProductVariation> ProductVariations { get; set; }
 
-    public virtual DbSet<Review> Reviews { get; set; }
-
-    //protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-    //    => optionsBuilder.UseSqlite(_configuration.GetConnectionString("DefaultConnection"));
+//    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+//#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
+//        => optionsBuilder.UseSqlite("Data Source=perfumeryDB.sqlite");
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -45,8 +43,6 @@ public partial class PerfumeryDbContext : DbContext
             entity.ToTable("Baskets");
             entity.Property(e => e.Id).HasColumnName("ID");
             entity.Property(e => e.CustomerId).HasColumnName("CustomerID");
-            entity.Property(e => e.Date).HasColumnName("Date");
-            entity.Property(e => e.Status).HasColumnName("Status");
             entity.Property(e => e.TotalPrice).HasColumnName("TotalPrice");
 
             entity.HasOne(d => d.Customer).WithMany(p => p.Baskets).HasForeignKey(d => d.CustomerId);
@@ -55,16 +51,18 @@ public partial class PerfumeryDbContext : DbContext
         modelBuilder.Entity<BasketItem>(entity =>
         {
             entity.ToTable("BasketItems");
-            entity.Property(e => e.Id).HasColumnName("ID");
+            entity.HasOne(d => d.Basket).WithMany(p => p.BasketItems)
+                .HasForeignKey(d => d.BasketId)
+                .OnDelete(DeleteBehavior.ClientSetNull);
+
+            entity.HasOne(d => d.ProductVariation).WithMany(p => p.BasketItems)
+                .HasForeignKey(d => d.ProductVariationId)
+                .OnDelete(DeleteBehavior.ClientSetNull);
+
+            entity.Property(e => e.Stock).HasColumnName("Quantity");
             entity.Property(e => e.BasketId).HasColumnName("BasketID");
-            entity.Property(e => e.ProductId).HasColumnName("ProductID");
-            entity.Property(e => e.Quantity).HasColumnName("Quantity");
-            entity.Property(e => e.Volume).HasColumnName("Volume");
-            entity.Property(e => e.Price).HasColumnName("Price");
+            entity.Property(e => e.ProductVariationId).HasColumnName("ProductVariationId");
 
-            entity.HasOne(d => d.Basket).WithMany(p => p.BasketItems).HasForeignKey(d => d.BasketId);
-
-            entity.HasOne(d => d.Product).WithMany(p => p.BasketItems).HasForeignKey(d => d.ProductId);
         });
 
         modelBuilder.Entity<Brand>(entity =>
@@ -133,7 +131,6 @@ public partial class PerfumeryDbContext : DbContext
 
         modelBuilder.Entity<ProductVariation>(entity =>
         {
-            entity.ToTable("ProductVariations");
             entity.Property(e => e.Id).HasColumnName("ID");
             entity.Property(e => e.CategoryId).HasColumnName("CategoryID");
             entity.Property(e => e.ProductId).HasColumnName("ProductID");
@@ -144,21 +141,6 @@ public partial class PerfumeryDbContext : DbContext
             entity.HasOne(d => d.Category).WithMany(p => p.ProductVariations).HasForeignKey(d => d.CategoryId);
 
             entity.HasOne(d => d.Product).WithMany(p => p.ProductVariations).HasForeignKey(d => d.ProductId);
-        });
-
-        modelBuilder.Entity<Review>(entity =>
-        {
-            entity.ToTable("Reviews");
-            entity.Property(e => e.Id).HasColumnName("ID");
-            entity.Property(e => e.CustomerId).HasColumnName("CustomerID");
-            entity.Property(e => e.ProductId).HasColumnName("ProductID");
-            entity.Property(e => e.Rating).HasColumnName("Rating");
-            entity.Property(e => e.Comment).HasColumnName("Comment");
-            entity.Property(e => e.Date).HasColumnName("Date");
-
-            entity.HasOne(d => d.Customer).WithMany(p => p.Reviews).HasForeignKey(d => d.CustomerId);
-
-            entity.HasOne(d => d.Product).WithMany(p => p.Reviews).HasForeignKey(d => d.ProductId);
         });
 
         OnModelCreatingPartial(modelBuilder);
