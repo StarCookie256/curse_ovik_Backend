@@ -7,7 +7,8 @@ namespace PerfumeryBackend.ApplicationLayer.Services;
 
 public class CustomerService(
     ICustomerRepository customerRepository,
-    IAvatarService avatarService) : ICustomerService
+    IAvatarService avatarService,
+    IBasketService basketService) : ICustomerService
 {
     public async Task<CustomerData?> GetCabinet(int customerId)
     {
@@ -17,6 +18,8 @@ public class CustomerService(
         {
             return null;
         }
+
+        int basketId = await basketService.GetBasketIdByCustomerId(customerId);
 
         return new CustomerData(
             Id: customer.Id,

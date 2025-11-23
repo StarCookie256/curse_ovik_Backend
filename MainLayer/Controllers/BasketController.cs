@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using PerfumeryBackend.ApplicationLayer.DTO.Basket;
 using PerfumeryBackend.ApplicationLayer.Interfaces;
+using PerfumeryBackend.DatabaseLayer.Models;
 using PerfumeryBackend.MainLayer.Contracts.Basket;
 using System.IdentityModel.Tokens.Jwt;
 
@@ -45,13 +46,12 @@ public class BasketController(IBasketService basketService) : ControllerBase
     [HttpPost("add")]
     public async Task<IActionResult> BasketAddItem([FromBody] BasketRequest request)
     {
-        await basketService.AddBasketItem(new BasketDto(
-            BasketId: request.BasketId,
-            BasketItemId: request.BasketItemId,
-            ProductVariationId: request.ProductVariationId,
-            Stock: request.Stock
-        ));
+        int customerId = Convert.ToInt32(User.FindFirst(JwtRegisteredClaimNames.Jti)?.Value);
 
+        await basketService.AddBasketItem(new BasketDto(
+            CustomerId: customerId,
+            ProductVariationId: request.ProductVariationId
+        ));
 
         return Ok();
     }
@@ -59,13 +59,12 @@ public class BasketController(IBasketService basketService) : ControllerBase
     [HttpDelete("delete")]
     public async Task<IActionResult> BasketDeleteItem([FromBody] BasketRequest request)
     {
-        await basketService.DeleteBasketItem(new BasketDto(
-            BasketId: request.BasketId,
-            BasketItemId: request.BasketItemId,
-            ProductVariationId: request.ProductVariationId,
-            Stock: request.Stock
-        ));
+        int customerId = Convert.ToInt32(User.FindFirst(JwtRegisteredClaimNames.Jti)?.Value);
 
+        await basketService.DeleteBasketItem(new BasketDto(
+            ProductVariationId: request.ProductVariationId,
+            CustomerId: customerId
+        ));
 
         return Ok();
     }

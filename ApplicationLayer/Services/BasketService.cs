@@ -11,26 +11,41 @@ public class BasketService(
     IBasketRepository basketRepository,
     IBasketItemsRepository basketItemRepository) : IBasketService
 {
+    public async Task<int> GetBasketIdByCustomerId(int customerId) =>
+        await basketRepository.GetBasketIdByCustomerId(customerId);
+
+    public async Task CreateBasketByCustomerId(int customerId)
+    {
+        Basket basket = new()
+        {
+            CustomerId = customerId,
+            TotalPrice = 0
+        };
+
+        await basketRepository.CreateBasketByCustomerId(basket);
+    }
     public async Task AddBasketItem(BasketDto item)
-    { 
+    {
+        var basket = await basketRepository.GetBasketByCustomerId(item.CustomerId);
+
         await basketItemRepository.AddBasketItem(new BasketItem 
         {
-            Id = item.BasketId,
-            BasketId = item.BasketItemId,
-            ProductVariationId = item.ProductVariationId,
-            Stock = item.Stock
-        }); 
+            BasketId = basket.Id,
+            ProductVariationId = item.ProductVariationId
+        });
+        await basketRepository.ChangeBasketTotalPrice(item.CustomerId, item.ProductVariationId, '+');
     }
 
     public async Task DeleteBasketItem(BasketDto item)
     {
+        var basket = await basketRepository.GetBasketByCustomerId(item.CustomerId);
+
         await basketItemRepository.DeleteBasketItem(new BasketItem
         {
-            Id = item.BasketId,
-            BasketId = item.BasketItemId,
-            ProductVariationId = item.ProductVariationId,
-            Stock = item.Stock
+            BasketId = basket.Id,
+            ProductVariationId = item.ProductVariationId
         });
+        await basketRepository.ChangeBasketTotalPrice(item.CustomerId, item.ProductVariationId, '-');
     }
 
     public async Task<BasketPageDto?> GetBasketByCustomerId(int customerId)
@@ -44,7 +59,7 @@ public class BasketService(
 
         List<BasketItemDto> basketItemDtos = new();
 
-        foreach(var product in basket.BasketItems)
+        foreach (var product in basket.BasketItems)
         {
             BasketItemDto basketItemDto = new(
                 product.Id,
@@ -66,7 +81,8 @@ public class BasketService(
 
         return new BasketPageDto(
             Id: basket.Id,
-            BasketItems: basketItemDtos
+            BasketItems: basketItemDtos,
+            TotalPrice: basket.TotalPrice
         );
     }
 

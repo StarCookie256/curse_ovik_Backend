@@ -11,7 +11,8 @@ public class AuthService(
     ICustomerRepository customerRepository,
     IPasswordHasherService passwordHasherService,
     IJwtService jwtService,
-    IAvatarService avatarService) : IAuthService
+    IAvatarService avatarService,
+    IBasketService basketService) : IAuthService
 {
     public async Task<AccessAndRefreshTokens?> Register(RegisterDto registerDto)
     {
@@ -38,6 +39,7 @@ public class AuthService(
         };
 
         await customerRepository.AddCustomer(customer);
+        await basketService.CreateBasketByCustomerId(customer.Id);
 
         string accessToken = await jwtService.GenerateAccessToken(customer);
 

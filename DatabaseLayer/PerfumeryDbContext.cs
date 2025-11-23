@@ -59,9 +59,9 @@ public partial class PerfumeryDbContext : DbContext
                 .HasForeignKey(d => d.ProductVariationId)
                 .OnDelete(DeleteBehavior.ClientSetNull);
 
-            entity.Property(e => e.Stock).HasColumnName("Quantity");
+            entity.Property(e => e.Stock).HasColumnName("Stock");
             entity.Property(e => e.BasketId).HasColumnName("BasketID");
-            entity.Property(e => e.ProductVariationId).HasColumnName("ProductVariationId");
+            entity.Property(e => e.ProductVariationId).HasColumnName("ProductVariationID");
 
         });
 

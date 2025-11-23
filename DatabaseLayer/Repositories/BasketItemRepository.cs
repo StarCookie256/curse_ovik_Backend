@@ -8,39 +8,41 @@ public class BasketItemRepository(PerfumeryDbContext context) : IBasketItemsRepo
 {
     public async Task AddBasketItem(BasketItem item)
     {
-        bool alreadyHave = await context.BasketItems
-            .AsNoTracking()
-            .AnyAsync(x => x == item);
-            
-        if (alreadyHave)
+        // Сначала проверяем существование корзины и продукта
+        bool basketExists = await context.Baskets.AnyAsync(b => b.Id == item.BasketId);
+        bool productExists = await context.ProductVariations.AnyAsync(pv => pv.Id == item.ProductVariationId);
+
+        if (!basketExists || !productExists)
+            throw new Exception("Basket or ProductVariation not found");
+
+        // Ищем существующий элемент
+        var existingItem = await context.BasketItems
+            .FirstOrDefaultAsync(x => x.BasketId == item.BasketId && x.ProductVariationId == item.ProductVariationId);
+
+        if (existingItem != null)
         {
-            BasketItem? basketItem = await context.BasketItems
-                .AsNoTracking()
-                .FirstOrDefaultAsync(x => x == item);
-            
-            BasketItem? updatedItem = basketItem;
-            updatedItem.Stock++;
-            context.Entry(basketItem).CurrentValues.SetValues(updatedItem);
-            await context.SaveChangesAsync();
+            existingItem.Stock++;
         }
         else
         {
+            item.Stock = 1;
             await context.BasketItems.AddAsync(item);
-            await context.SaveChangesAsync();
         }
+
+        await context.SaveChangesAsync();
     }
 
     public async Task DeleteBasketItem(BasketItem item)
     {
         bool alreadyHave = await context.BasketItems
             .AsNoTracking()
-            .AnyAsync(x => x == item);
+            .AnyAsync(x => x.BasketId == item.BasketId && x.ProductVariationId == item.ProductVariationId);
 
         if (alreadyHave)
         {
             BasketItem? basketItem = await context.BasketItems
                 .AsNoTracking()
-                .FirstOrDefaultAsync(x => x == item);
+                .FirstOrDefaultAsync(x => x.BasketId == item.BasketId && x.ProductVariationId == item.ProductVariationId);
 
             if (basketItem.Stock > 1)
             {
