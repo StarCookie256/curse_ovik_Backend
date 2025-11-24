@@ -32,31 +32,30 @@ public class BasketItemRepository(PerfumeryDbContext context) : IBasketItemsRepo
         await context.SaveChangesAsync();
     }
 
+    //context.Entry(basketItem).CurrentValues.SetValues(updatedItem);
     public async Task DeleteBasketItem(BasketItem item)
     {
-        bool alreadyHave = await context.BasketItems
-            .AsNoTracking()
-            .AnyAsync(x => x.BasketId == item.BasketId && x.ProductVariationId == item.ProductVariationId);
+        // Сначала проверяем существование корзины и продукта
+        bool basketExists = await context.Baskets.AnyAsync(b => b.Id == item.BasketId);
+        bool productExists = await context.ProductVariations.AnyAsync(pv => pv.Id == item.ProductVariationId);
 
-        if (alreadyHave)
+        if (!basketExists || !productExists)
+            throw new Exception("Basket or ProductVariation not found");
+
+        // Ищем существующий элемент
+        var existingItem = await context.BasketItems
+            .FirstOrDefaultAsync(x => x.BasketId == item.BasketId && x.ProductVariationId == item.ProductVariationId);
+
+        if (existingItem.Stock > 1)
         {
-            BasketItem? basketItem = await context.BasketItems
-                .AsNoTracking()
-                .FirstOrDefaultAsync(x => x.BasketId == item.BasketId && x.ProductVariationId == item.ProductVariationId);
-
-            if (basketItem.Stock > 1)
-            {
-                BasketItem? updatedItem = basketItem;
-                updatedItem.Stock--;
-                context.Entry(basketItem).CurrentValues.SetValues(updatedItem);
-                await context.SaveChangesAsync();
-            }
-            else
-            {
-                context.BasketItems.Remove(item);
-                await context.SaveChangesAsync();
-            }
+            existingItem.Stock--;
         }
+        else
+        {
+            context.BasketItems.Remove(existingItem);
+        }
+
+        await context.SaveChangesAsync();
     }
 
     public async Task<int?> GetBasketItemsCount(int customerId)

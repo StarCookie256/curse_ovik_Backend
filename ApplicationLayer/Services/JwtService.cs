@@ -11,6 +11,46 @@ namespace PerfumeryBackend.ApplicationLayer.Services
 {
     public class JwtService(IConfiguration configuration) : IJwtService
     {
+        public async Task<bool> ValidateTokenAsync(string token)
+        {
+            if (string.IsNullOrEmpty(token))
+                return false;
+
+            try
+            {
+                JwtSecurityTokenHandler tokenHandler = new JwtSecurityTokenHandler();
+                // Параметры валидации
+                var validationParameters = GetTokenValidationParameters();
+
+                // Проверяем токен
+                var principal = tokenHandler.ValidateToken(token, validationParameters, out _);
+
+                return principal != null;
+            }
+            catch (SecurityTokenExpiredException)
+            {
+                // Токен истек - это "валидный" но просроченный токен
+                // Middleware будет пытаться его обновить
+                return false;
+            }
+            catch (SecurityTokenInvalidSignatureException)
+            {
+                // Неверная подпись
+                return false;
+            }
+            catch (SecurityTokenMalformedException)
+            {
+                // Неправильный формат токена
+                return false;
+            }
+            catch (Exception ex)
+            {
+                // Любая другая ошибка
+                Console.WriteLine($"Token validation error: {ex.Message}");
+                return false;
+            }
+        }
+
         public Task<string> GenerateAccessToken(Customer customer)
         {
             IConfigurationSection jwtSettings = configuration.GetSection("Jwt");
@@ -77,6 +117,28 @@ namespace PerfumeryBackend.ApplicationLayer.Services
             {
                 return null;
             }
+        }
+
+        private TokenValidationParameters GetTokenValidationParameters()
+        {
+            IConfigurationSection jwtSettings = configuration.GetSection("Jwt");
+            byte[] key = Encoding.UTF8.GetBytes(jwtSettings["Key"])
+                ?? throw new Exception("Key value for JWT token was not found!!!");
+
+            return new TokenValidationParameters
+            {
+                ValidateIssuerSigningKey = true,
+                IssuerSigningKey = new SymmetricSecurityKey(key),
+
+                ValidateIssuer = true,
+                ValidIssuer = configuration["Jwt:Issuer"],
+
+                ValidateAudience = true,
+                ValidAudience = configuration["Jwt:Audience"],
+
+                ValidateLifetime = true, // Проверяем время жизни токена
+                ClockSkew = TimeSpan.Zero // Без допуска по времени
+            };
         }
     }
 }

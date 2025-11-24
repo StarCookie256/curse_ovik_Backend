@@ -34,26 +34,33 @@ public class BasketRepository(PerfumeryDbContext context) : IBasketRepository
 
     public async Task ChangeBasketTotalPrice(int customerId, int productId, char operation)
     {
-        var basket = await context.Baskets
-            .AsNoTracking()
+        Basket? basket = await context.Baskets
             .Include(x => x.BasketItems)
                 .ThenInclude(bi => bi.ProductVariation)
-            .FirstAsync(x => x.CustomerId == customerId);
+            .FirstOrDefaultAsync(x => x.CustomerId == customerId);
 
         // Получить цену для конкретного ProductVariation
-        var targetItem = basket.BasketItems
-            .FirstOrDefault(bi => bi.ProductVariation.Id == productId);
+        ProductVariation targetItem = await context.ProductVariations
+            .AsNoTracking()
+            .FirstAsync(bi => bi.Id == productId);
 
         if (targetItem != null)
         {
-            if(operation == '+')
+            double? priceChange = targetItem.Price;
+            if (operation == '+')
             {
-                basket.TotalPrice += targetItem.ProductVariation.Price;
+                basket.TotalPrice += priceChange;
             }
-            else
+            else if (operation == '-')
             {
-                // Проверка, чтобы цена не ушла в минус
-                basket.TotalPrice -= targetItem.ProductVariation.Price;
+                if (basket.TotalPrice > priceChange)
+                {
+                    basket.TotalPrice -= priceChange;
+                }
+                else
+                {
+                    basket.TotalPrice = 0;
+                }
             }
 
             context.Entry(basket).Property(x => x.TotalPrice).IsModified = true;

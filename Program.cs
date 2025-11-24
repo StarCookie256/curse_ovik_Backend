@@ -9,6 +9,7 @@ using System.Text;
 using PerfumeryBackend.DatabaseLayer.Repositories;
 using PerfumeryBackend.DatabaseLayer.Repositories.Interfaces;
 using Microsoft.Extensions.FileProviders;
+using PerfumeryBackend.MainLayer.Middlewares;
 //using PerfumeryBackend.MainLayer.Services;
 
 namespace PerfumeryBackend
@@ -37,6 +38,8 @@ namespace PerfumeryBackend
             app.UseHttpsRedirection();
 
             app.UseCors("AllowAll");
+
+            app.UseMiddleware<JwtRefreshMiddleware>();
 
             app.UseAuthentication();
             app.UseAuthorization();

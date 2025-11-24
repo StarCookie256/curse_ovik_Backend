@@ -79,6 +79,11 @@ public class BasketService(
             basketItemDtos.Add(basketItemDto);
         }
 
+        //if(basket.TotalPrice == null)
+        //{
+        //    basket.TotalPrice = basketItemDtos.
+        //}
+
         return new BasketPageDto(
             Id: basket.Id,
             BasketItems: basketItemDtos,
