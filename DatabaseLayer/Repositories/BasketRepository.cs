@@ -68,4 +68,19 @@ public class BasketRepository(PerfumeryDbContext context) : IBasketRepository
             await context.SaveChangesAsync();
         }
     }
+
+    public async Task ClearBasketTotalPrice(int customerId)
+    {
+        Basket? basket = await context.Baskets
+            .FirstOrDefaultAsync(x => x.CustomerId == customerId);
+
+        if (basket != null) 
+        {
+            basket.TotalPrice = 0;
+
+            context.Entry(basket).Property(x => x.TotalPrice).IsModified = true;
+
+            await context.SaveChangesAsync();
+        }
+    }
 }

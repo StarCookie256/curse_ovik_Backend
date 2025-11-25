@@ -58,6 +58,22 @@ public class BasketItemRepository(PerfumeryDbContext context) : IBasketItemsRepo
         await context.SaveChangesAsync();
     }
 
+    public async Task ClearBasket(int basketId)
+    {
+        // Проверка существования корзины
+        bool basketExists = await context.Baskets.AnyAsync(x => x.Id == basketId);
+        if (!basketExists)
+        {
+            throw new ArgumentException($"Basket with id {basketId} not found");
+        }
+
+        IEnumerable<BasketItem> basketItems = context.BasketItems
+            .Where(x => x.BasketId == basketId)
+            .AsEnumerable();
+        context.BasketItems.RemoveRange(basketItems);
+        await context.SaveChangesAsync();
+    }
+
     public async Task<int?> GetBasketItemsCount(int customerId)
     {
         List<BasketItem> basketItems = await context.BasketItems

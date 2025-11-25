@@ -68,4 +68,14 @@ public class BasketController(IBasketService basketService) : ControllerBase
 
         return Ok();
     }
+
+    [HttpDelete("clear")]
+    public async Task<IActionResult> BasketClear()
+    {
+        int customerId = Convert.ToInt32(User.FindFirst(JwtRegisteredClaimNames.Jti)?.Value);
+
+        await basketService.ClearBasket(customerId);
+
+        return Ok();
+    }
 }

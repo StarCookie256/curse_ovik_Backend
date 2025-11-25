@@ -11,4 +11,5 @@ public interface IBasketService
     Task DeleteBasketItem(BasketDto item);
     Task AddBasketItem(BasketDto item);
     Task<int?> GetBasketItemsCount(int customerId);
+    Task ClearBasket(int customerId);
 }

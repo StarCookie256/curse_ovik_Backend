@@ -93,4 +93,12 @@ public class BasketService(
 
     public async Task<int?> GetBasketItemsCount(int customerId) =>
         await basketItemRepository.GetBasketItemsCount(customerId);
+
+    public async Task ClearBasket(int customerId)
+    {
+        int basketId = await basketRepository.GetBasketIdByCustomerId(customerId);
+
+        await basketItemRepository.ClearBasket(basketId);
+        await basketRepository.ClearBasketTotalPrice(customerId);
+    }
 }

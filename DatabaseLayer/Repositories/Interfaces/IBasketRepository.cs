@@ -8,5 +8,5 @@ public interface IBasketRepository
     Task ChangeBasketTotalPrice(int customerId, int productId, char operation);
     Task<Basket> GetBasketByCustomerId(int customerId);
     Task CreateBasketByCustomerId(Basket basket);
-    //Task<int?> GetBasketItemsCount(int customerId);
+    Task ClearBasketTotalPrice(int customerId);
 }

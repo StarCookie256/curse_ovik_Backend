@@ -7,4 +7,5 @@ public interface IBasketItemsRepository
     Task<int?> GetBasketItemsCount(int customerId);
     Task AddBasketItem(BasketItem item);
     Task DeleteBasketItem(BasketItem item);
+    Task ClearBasket(int basketId);
 }
