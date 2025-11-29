@@ -58,6 +58,11 @@ public class AuthService(
             return null;
         }
 
+        if(!passwordHasherService.Verify(loginDto.Password, customer.Password, customer.PasswordSalt))
+        {
+            return null;
+        }
+
         RefreshToken refreshToken = await jwtService.GenerateRefreshToken();
         string accessToken = await jwtService.GenerateAccessToken(customer);
 

@@ -44,7 +44,10 @@ namespace PerfumeryBackend
             app.UseAuthentication();
             app.UseAuthorization();
 
-            app.UseStaticFiles();
+            app.UseStaticFiles(new StaticFileOptions
+            {
+                RequestPath = "/static"  // URL: /static/avatars/user1.jpg
+            });
             app.MapControllers();
 
             app.Run();
@@ -60,12 +63,10 @@ namespace PerfumeryBackend
                 options.AddPolicy("AllowAll", policy =>
                 {
                     policy.WithOrigins(
-                        "http://localhost:3000",
-                        "https://localhost:3000",
-                        "http://localhost:4200",
-                        "https://localhost:4200",
-                        "http://localhost:7263",
-                        "https://localhost:7263"
+                        "https://starcookie.beget.tech",  // твой домен
+                        "http://starcookie.beget.tech",   // http версия
+                        "https://localhost:3000",         // для локальной разработки
+                        "http://localhost:3000"
                     )
                     .AllowAnyMethod()
                     .AllowAnyHeader()
