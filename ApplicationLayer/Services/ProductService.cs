@@ -19,25 +19,45 @@ public class ProductService(
     {
         var products = await productRepository.GetProductsByBrandAsync(brandId);
 
+        if (products == null || !products.Any())
+            return new List<ProductDto>();
+
         List<ProductDto> productDtos = new();
 
         foreach (var pr in products)
         {
+            if (pr == null) continue;
+
             var varProps = await productVariationService.GetVolumesAndPricesByProductAsync(pr.Id);
             var categories = await productVariationService.GetCategoriesByProductAsync(pr.Id);
 
-            productDtos.Add(new ProductDto(
+            if (pr.Id <= 0 ||
+                string.IsNullOrWhiteSpace(pr.Name) ||
+                pr.Brand == null ||
+                pr.Brand.Id <= 0 ||
+                string.IsNullOrWhiteSpace(pr.Brand.Name) ||
+                categories == null ||
+                !categories.Any() ||
+                varProps == null)
+            {
+                continue;
+            }
+
+            // Создаем DTO
+            var productDto = new ProductDto(
                 Id: pr.Id,
-                Name: pr.Name,
-                Brand: new BrandDto(Id: pr.Brand.Id, Name: pr.Brand.Name),
+                Name: pr.Name.Trim(),
+                Brand: new BrandDto(pr.Brand.Id, pr.Brand.Name.Trim()),
                 Categories: categories,
                 FPrice: varProps.FPrice,
                 SPrice: varProps.SPrice,
                 FVolume: varProps.FVolume,
-                SVolume: varProps.SPrice,
-                Gender: pr.Gender,
-                Image: pr.Image
-            ));
+                SVolume: varProps.SVolume,
+                Gender: pr.Gender?.Trim() ?? string.Empty,
+                Image: pr.Image?.Trim() ?? string.Empty
+            );
+
+            productDtos.Add(productDto);
         }
 
         return productDtos;
